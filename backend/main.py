@@ -39,7 +39,9 @@ app.add_middleware(
 logger = logging.getLogger(__name__)
 
 # Execution architecture for CPU-bound tasks
-ml_executor = ProcessPoolExecutor(max_workers=4)
+from concurrent.futures import ThreadPoolExecutor
+
+ml_executor = ThreadPoolExecutor(max_workers=2)
 
 # Bounded ML concurrency (prevents CPU exhaustion)
 ml_semaphore = asyncio.Semaphore(4)
