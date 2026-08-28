@@ -1,7 +1,3 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
-
 # Crime Intelligence & Hotspot Detection Platform
 
 This is an interactive geospatial analytics application designed to analyze historical crime records, identify spatial and temporal crime patterns, detect crime hotspots using clustering algorithms, evaluate clustering quality, classify risk levels, and present the results through an intuitive map-first interface.
