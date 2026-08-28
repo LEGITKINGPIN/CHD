@@ -1,0 +1,5 @@
+Cluster_ID,Crime_Volume,Center_Lat,Center_Lon,Area_Sq_KM,Crime_Density_Per_KM2,Intensity_Score,Primary_Crime_Type,Night_Crime_Pct,Risk_Category,Hotspot_Rank
+0,2694,41.88422,-87.63193,42.232,63.8,11237.08,THEFT,34.9,Moderate Risk,1
+1,960,41.89113,-87.76143,28.811,33.3,3394.31,THEFT,34.7,Moderate Risk,2
+3,679,41.97503,-87.65472,26.491,25.6,2228.55,THEFT,33.6,Moderate Risk,3
+2,452,41.78622,-87.60048,22.435,20.1,1379.28,THEFT,33.4,Moderate Risk,4

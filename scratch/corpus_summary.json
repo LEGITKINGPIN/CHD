@@ -1,0 +1,323 @@
+[
+  {
+    "id": 1,
+    "filename": "paper_01.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 2,
+    "filename": "paper_02.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 3,
+    "filename": "paper_03.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 4,
+    "filename": "paper_04.pdf",
+    "title_guess": "Received 14 January 2026, accepted 23 January 2026, date of publication 28 January 2026, date of current version 3 February 2026.",
+    "abstract": "A cognitive digital twin using AI and machine learning is proposed in this study. System\nof crime hot spot identification and investigations in cities. The suggested system forms up a simulated\ncopy of city areas through blending historical crime observations, the environment and real.",
+    "algorithms_mentioned": [
+      "DBSCAN",
+      "Random Forest",
+      "SVM",
+      "Deep Learning",
+      "LSTM",
+      "CNN",
+      "Transformer",
+      "RNN"
+    ],
+    "datasets_mentioned": [],
+    "spatial_concepts": [
+      "Geospatial",
+      "Hotspot",
+      "Density",
+      "Spatial-temporal"
+    ]
+  },
+  {
+    "id": 5,
+    "filename": "paper_05.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 6,
+    "filename": "paper_06.pdf",
+    "title_guess": "2020 3rd International Conference on Computing, Mathematics and Engineering Technologies (iCoMET)",
+    "abstract": "\u2014The constant growth in urbanization is a cause of\nsigni\ufb01cant social and economical transformations in urban areas.\nAreas where crime rates are above the normal level, are known\nas crime hot-spots. The increase in urban population is posing\nchallenges related to the management, services and safety from\ncriminal activities. It is important to keep an eye on criminal\nactivities and for the law enforcement agencies, being able to\nprovide much needed safety of public is an increasingly complex\ntask. This complex task can be handled by new technologies\nwhich can help these agencies to effectively analyze and under-\nstand the different crime trends and patterns with respect to\ntheir geographic locations. This paper uses Hierarchical Density-\nbased spatial clustering of applications with noise (HDBSCAN)\nto \ufb01nd spatio-temporal crime hot-spots by clustering and the\nresults shows that this technique outperforms others.\nIndex Terms\u2014Hot-spot detection, Clustering, Hierarchical\nClustering, Agglomer",
+    "algorithms_mentioned": [
+      "DBSCAN",
+      "Hierarchical",
+      "Random Forest",
+      "Decision Tree",
+      "Naive Bayes",
+      "Logistic Regression"
+    ],
+    "datasets_mentioned": [
+      "Chicago",
+      "New York",
+      "Open Data"
+    ],
+    "spatial_concepts": [
+      "Euclidean",
+      "Geospatial",
+      "Hotspot",
+      "Density",
+      "KDE",
+      "Spatial-temporal"
+    ]
+  },
+  {
+    "id": 7,
+    "filename": "paper_07.pdf",
+    "title_guess": "Received September 9, 2020, accepted September 28, 2020, date of publication October 2, 2020, date of current version October 14, 2020.",
+    "abstract": "Crime prediction is of great signi\ufb01cance to the formulation of policing strategies and the\nimplementation of crime prevention and control. Machine learning is the current mainstream prediction\nmethod. However, few studies have systematically compared different machine learning methods for crime\nprediction. This paper takes the historical data of public property crime from 2015 to 2018 from a section of\na large coastal city in the southeast of China as research data to assess the predictive power between several\nmachine learning algorithms. Results based on the historical crime data alone suggest that the LSTM model\noutperformed KNN, random forest, support vector machine, naive Bayes, and convolutional neural networks.\nIn addition, the built environment data of points of interests (POIs) and urban road network density are input\ninto LSTM model as covariates. It is found that the model with built environment covariates has better\nprediction effect compared with the original model that is",
+    "algorithms_mentioned": [
+      "K-Means",
+      "Random Forest",
+      "SVM",
+      "LSTM",
+      "CNN",
+      "RNN",
+      "Decision Tree",
+      "Naive Bayes",
+      "Logistic Regression"
+    ],
+    "datasets_mentioned": [
+      "Twitter"
+    ],
+    "spatial_concepts": [
+      "GIS",
+      "Coordinate",
+      "Hotspot",
+      "Density",
+      "KDE",
+      "Spatial-temporal"
+    ]
+  },
+  {
+    "id": 8,
+    "filename": "paper_08.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 9,
+    "filename": "paper_09.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 10,
+    "filename": "paper_10.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 11,
+    "filename": "paper_11.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 12,
+    "filename": "paper_12.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 13,
+    "filename": "paper_13.pdf",
+    "title_guess": "Received April 24, 2021, accepted May 2, 2021, date of publication May 6, 2021, date of current version May 17, 2021.",
+    "abstract": "Crime and violation are the threat to justice and meant to be controlled. Accurate crime\nprediction and future forecasting trends can assist to enhance metropolitan safety computationally. The\nlimited ability of humans to process complex information from big data hinders the early and accurate\nprediction and forecasting of crime. The accurate estimation of the crime rate, types and hot spots from past\npatterns creates many computational challenges and opportunities. Despite considerable research efforts, yet\nthere is a need to have a better predictive algorithm, which direct police patrols toward criminal activities.\nPrevious studies are lacking to achieve crime forecasting and prediction accuracy based on learning models.\nTherefore, this study applied different machine learning algorithms, namely, the logistic regression, support\nvector machine (SVM), Na\u00efve Bayes, k-nearest neighbors (KNN), decision tree, multilayer perceptron\n(MLP), random forest, and eXtreme Gradient Boosting (XGBoo",
+    "algorithms_mentioned": [
+      "DBSCAN",
+      "Hierarchical",
+      "Random Forest",
+      "SVM",
+      "Deep Learning",
+      "LSTM",
+      "CNN",
+      "RNN",
+      "Decision Tree",
+      "Logistic Regression"
+    ],
+    "datasets_mentioned": [
+      "Chicago",
+      "San Francisco",
+      "New York",
+      "Twitter"
+    ],
+    "spatial_concepts": [
+      "GIS",
+      "Hotspot",
+      "Density",
+      "KDE",
+      "Spatial-temporal"
+    ]
+  },
+  {
+    "id": 14,
+    "filename": "paper_14.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 15,
+    "filename": "paper_15.pdf",
+    "title_guess": "Received 10 April 2023, accepted 11 June 2023, date of publication 14 June 2023, date of current version 20 June 2023.",
+    "abstract": "Predicting crime using machine learning and deep learning techniques has gained considerable\nattention from researchers in recent years, focusing on identifying patterns and trends in crime occurrences.\nThis review paper examines over 150 articles to explore the various machine learning and deep learning\nalgorithms applied to predict crime. The study provides access to the datasets used for crime prediction by\nresearchers and analyzes prominent approaches applied in machine learning and deep learning algorithms to\npredict crime, offering insights into different trends and factors related to criminal activities. Additionally,\nthe paper highlights potential gaps and future directions that can enhance the accuracy of crime prediction.\nFinally, the comprehensive overview of research discussed in this paper on crime prediction using machine\nlearning and deep learning approaches serves as a valuable reference for researchers in this field. By gaining\na deeper understanding of crime predictio",
+    "algorithms_mentioned": [
+      "Hierarchical",
+      "Random Forest",
+      "Deep Learning",
+      "LSTM",
+      "CNN",
+      "RNN",
+      "Decision Tree",
+      "Logistic Regression"
+    ],
+    "datasets_mentioned": [
+      "Chicago",
+      "San Francisco",
+      "New York",
+      "London",
+      "Twitter"
+    ],
+    "spatial_concepts": [
+      "Hotspot",
+      "Density",
+      "Spatial-temporal"
+    ]
+  },
+  {
+    "id": 16,
+    "filename": "paper_16.pdf",
+    "title_guess": "Received 11 July 2023, accepted 18 August 2023, date of publication 28 August 2023, date of current version 5 September 2023.",
+    "abstract": "Crime prevention relies on crime prediction as a crucial method to determine the most effective\npatrol strategy for law enforcement agencies. Various approaches and solutions have been utilized to predict\ncriminal activity. Nonetheless the environment and nature of information for crime prediction is constantly\nchanging. The utilization of social media for sharing information and ideas has experienced a significant\nsurge. Twitter, in particular, is regarded as a valuable platform for gathe ring public sentiments, emotions,\nperspectives, and feedback. In this regard, techniques for analyzing the sentiment of tweets on Twitter have\nbeen developed to ascertain whether the textual content conveys a positive or negative viewpoint on crime\nincident. Data fusion is a significant technique to integrate the information from crime and tweets data\nsource. Therefore, this study aims to leverage semantic knowledge learned in the text domain and historical\ncrime data, and transfer them into a model ",
+    "algorithms_mentioned": [
+      "SVM",
+      "Deep Learning",
+      "LSTM",
+      "CNN",
+      "RNN",
+      "Logistic Regression"
+    ],
+    "datasets_mentioned": [
+      "Chicago",
+      "Twitter"
+    ],
+    "spatial_concepts": [
+      "Hotspot",
+      "Density",
+      "KDE"
+    ]
+  },
+  {
+    "id": 17,
+    "filename": "paper_17.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 18,
+    "filename": "paper_18.pdf",
+    "title_guess": "Received August 20, 2020, accepted August 27, 2020, date of publication September 8, 2020, date of current version September 23, 2020.",
+    "abstract": "The primary objective of this study is to accumulate, summarize, and evaluate the state-of-\nthe-art for spatio-temporal crime hotspot detection and prediction techniques by conducting a systematic\nliterature review (SLR). The authors were unable to \ufb01nd a comprehensive study on crime hotspot detection\nand prediction while conducting this SLR. Therefore, to the best of author\u2019s knowledge, this study is the\npremier attempt to critically analyze the existing literature along with presenting potential challenges faced\nby current crime hotspot detection and prediction systems. The SLR is conducted by thoroughly consulting\ntop \ufb01ve scienti\ufb01c databases (such as IEEE, Science Direct, Springer, Scopus, and ACM), and synthesized\n49 different studies on crime hotspot detection and prediction after critical review. This study unfolds the\nfollowing major aspects: 1) the impact of data mining and machine learning approaches, especially clustering\ntechniques in crime hotspot detection; 2) the utility o",
+    "algorithms_mentioned": [
+      "DBSCAN",
+      "Hierarchical",
+      "Random Forest",
+      "SVM",
+      "Deep Learning",
+      "LSTM",
+      "CNN",
+      "Decision Tree"
+    ],
+    "datasets_mentioned": [
+      "Chicago",
+      "New York",
+      "London",
+      "Twitter",
+      "Open Data"
+    ],
+    "spatial_concepts": [
+      "Geospatial",
+      "GIS",
+      "Hotspot",
+      "Density",
+      "KDE",
+      "Spatial-temporal"
+    ]
+  },
+  {
+    "id": 19,
+    "filename": "paper_19.pdf",
+    "title_guess": "--- Page 2 ---",
+    "abstract": "NOT SPECIFIED / NOT VERIFIED",
+    "algorithms_mentioned": [],
+    "datasets_mentioned": [],
+    "spatial_concepts": []
+  },
+  {
+    "id": 20,
+    "filename": "paper_20.pdf",
+    "title_guess": "Crime Hot Spot Forecasting:",
+    "abstract": "\u2014Crime is a major social problem in the United\nStates, threatening public safety and disrupting the economy.\nUnderstanding patterns in criminal activity allows for the\nprediction of future high-risk crime \u201chot spots\u201d and enables\npolice precincts to more effectively allocate of\ufb01cers to prevent\nor respond to incidents. With the ever-increasing ability of\nstates and organizations to collect and store detailed data\ntracking crime occurrence, a signi\ufb01cant amount of data with\nspatial and temporal information has been collected. How\nto use the bene\ufb01t of massive spatial-temporal information to\nprecisely predict the regional crime rates becomes necessary.\nThe recurrent neural network model has been widely\nproven effective for detecting the temporal patterns in a\ntime series. In this study, we propose the Spatio-Temporal\nneural network (STNN) to precisely forecast crime hot spots\nwith embedding spatial information. We evaluate the model\nusing call-for-service data provided by the Portland, Orego",
+    "algorithms_mentioned": [
+      "LSTM",
+      "RNN",
+      "Naive Bayes",
+      "Logistic Regression"
+    ],
+    "datasets_mentioned": [
+      "Chicago",
+      "New York"
+    ],
+    "spatial_concepts": [
+      "Geospatial",
+      "Coordinate",
+      "Density",
+      "Spatial-temporal"
+    ]
+  }
+]

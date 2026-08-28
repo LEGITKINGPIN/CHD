@@ -1,0 +1,4 @@
+Algorithm,Clusters,Noise Points,Silhouette Score,Davies-Bouldin,Calinski-Harabasz,Interpretation
+K-Means,5,0,0.6279,0.4558,18605.8,"Strong, well-separated spatial clusters."
+DBSCAN,4,99,0.7532,0.2954,13812.33,"Strong, well-separated spatial clusters."
+Hierarchical,5,0,0.6,0.475,17492.69,"Strong, well-separated spatial clusters."

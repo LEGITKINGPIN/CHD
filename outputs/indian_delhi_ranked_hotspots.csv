@@ -1,0 +1,5 @@
+Cluster_ID,Crime_Volume,Center_Lat,Center_Lon,Area_Sq_KM,Crime_Density_Per_KM2,Intensity_Score,Primary_Crime_Type,Night_Crime_Pct,Risk_Category,Hotspot_Rank
+0,1678,28.64031,77.20469,42.872,39.1,6195.79,THEFT & PICKPOCKETING,32.8,Moderate Risk,1
+1,560,28.5495,77.19976,21.67,25.8,1842.38,THEFT & PICKPOCKETING,28.9,Moderate Risk,2
+3,405,28.70483,77.10266,19.802,20.5,1241.67,THEFT & PICKPOCKETING,34.8,Moderate Risk,3
+2,258,28.59274,77.04613,16.065,16.1,731.87,THEFT & PICKPOCKETING,28.3,Moderate Risk,4

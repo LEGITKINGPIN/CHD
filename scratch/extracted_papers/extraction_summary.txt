@@ -1,0 +1,20 @@
+A Deep Learning-Based Efficient Firearms.pdf -> paper_01.md | 10 pages | Status: SUCCESS
+A Hybrid Deep Learning Approach for Replay.pdf -> paper_02.md | 12 pages | Status: SUCCESS
+A Visualized Botnet Detection System based Deep.pdf -> paper_03.md | 22 pages | Status: SUCCESS
+AI_and_Machine_Learning-Enabled_Cognitive_Digital_Twin_for_Crime_Hotspot_Detection_and_Analysis.pdf -> paper_04.md | 10 pages | Status: SUCCESS
+Approach for Validating a Multi-Dimensional.pdf -> paper_05.md | 15 pages | Status: SUCCESS
+baqir2020.pdf -> paper_06.md | 5 pages | Status: SUCCESS
+Comparison_of_Machine_Learning_Algorithms_for_Predicting_Crime_Hotspots.pdf -> paper_07.md | 9 pages | Status: SUCCESS
+Crime Hotspot Comparison of Machine Learning Algorithms for.pdf -> paper_08.md | 9 pages | Status: SUCCESS
+Crime Hotspots vs Police District.pdf -> paper_09.md | 25 pages | Status: SUCCESS
+Crime Prediction Using Machine Learning and Deep Learning A Systematic Review and Future Directions.pdf -> paper_10.md | 18 pages | Status: SUCCESS
+CRIME TYPE AND OCCURRENCE PREDICTION USING MACHINE LEARNING ALGORITHM.pdf -> paper_11.md | 8 pages | Status: SUCCESS
+Deep-IDS A Real Time Intrusion Detector for IoT.pdf -> paper_12.md | 14 pages | Status: SUCCESS
+Empirical_Analysis_for_Crime_Prediction_and_Forecasting_Using_Machine_Learning_and_Deep_Learning_Techniques.pdf -> paper_13.md | 15 pages | Status: SUCCESS
+Enhancing Spatial-Temporal Crime Forecasting.pdf -> paper_14.md | 13 pages | Status: SUCCESS
+getPDF.pdf -> paper_15.md | 18 pages | Status: SUCCESS
+Multimodal_Deep_Learning_Crime_Prediction_Using_Tweets.pdf -> paper_16.md | 11 pages | Status: SUCCESS
+Spatio-Temporal Crime Predictions by Leveraging Artificial Intelligence for Citizens Security in Smart Cities.pdf -> paper_17.md | 14 pages | Status: SUCCESS
+Spatio-Temporal_Crime_HotSpot_Detection_and_Prediction_A_Systematic_Literature_Review.pdf -> paper_18.md | 22 pages | Status: SUCCESS
+Weapon Detection in Real-Time CCTV Videos.pdf -> paper_19.md | 17 pages | Status: SUCCESS
+zhuang2017.pdf -> paper_20.md | 8 pages | Status: SUCCESS
