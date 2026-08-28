@@ -20,6 +20,8 @@ def run_clustering(
 
     start_time = time.time()
 
+    algorithm = algorithm.upper()
+
     # coords are shape (n_samples, 2), specifically [lng, lat] for xy.
     # But usually frontend provides [lat, lng]. We expect [lat, lng] as input to this function.
 
