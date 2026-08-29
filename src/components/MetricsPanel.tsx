@@ -29,7 +29,7 @@ export default function MetricsPanel({ result, algorithm, onClusterHover, hovere
   const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#cbd5e1'];
 
   return (
-    <div className="w-80 bg-[var(--color-surface)]/95 backdrop-blur shadow-lg rounded-[var(--radius-panel)] border border-[var(--color-border)] flex flex-col max-h-full">
+    <div className="w-full md:w-80 bg-[var(--color-surface)]/95 backdrop-blur shadow-lg rounded-[var(--radius-panel)] border border-[var(--color-border)] flex flex-col max-h-full">
       
       <div className="p-5 border-b border-[var(--color-border)] shrink-0 bg-[var(--color-background)] rounded-t-[var(--radius-panel)]">
         <h3 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-1">

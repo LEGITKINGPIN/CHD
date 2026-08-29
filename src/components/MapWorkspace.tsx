@@ -837,7 +837,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
       </Map>
 
       {/* Right Side Panel Stack */}
-      <div className="absolute top-4 right-4 bottom-4 z-20 flex flex-col items-end gap-4 pointer-events-none w-80">
+      <div className="absolute md:top-4 max-md:top-auto right-4 bottom-16 md:bottom-4 z-20 flex flex-col items-end max-md:items-center justify-end md:justify-start gap-4 pointer-events-none max-md:left-4 md:w-80 max-md:max-h-[40vh]">
         
         {/* Top: Metrics Panel (Children / Global) */}
         {children && !localClusteringResult && (
@@ -987,8 +987,8 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
                   </div>
                   <div>
                     <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Record ID</div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="text-[12px] font-mono text-[var(--color-slate)] truncate" title={selectedCrime.id}>{selectedCrime.id || 'N/A'}</div>
+                    <div className="flex items-start gap-1.5">
+                      <div className="text-[12px] font-mono text-[var(--color-slate)] break-all" title={selectedCrime.id}>{selectedCrime.id || 'N/A'}</div>
                       {selectedCrime.id && (
                         <button 
                           onClick={(e) => {
