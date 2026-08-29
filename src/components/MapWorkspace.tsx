@@ -524,6 +524,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         maplibreLogo={false}
         initialViewState={initialViewState}
         mapStyle={currentStyle}
+        minZoom={3}
         interactiveLayerIds={['crime-points', 'crime-clusters', 'clustered-points-circle', 'cluster-hulls-fill']}
         onMouseMove={onInteractiveHover}
         onClick={onMapClick}
