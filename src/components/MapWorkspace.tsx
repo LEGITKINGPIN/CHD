@@ -553,7 +553,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
           clusterMaxZoom={14}
           clusterRadius={50}
         >
-          {!isClusteringValid && (
+          {(!isClusteringValid || localClusters) && (
             <Layer
               id="crime-points"
               type="circle"
@@ -568,7 +568,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
             />
           )}
               
-          {!isClusteringValid && (
+          {(!isClusteringValid || localClusters) && (
             <Layer
               id="crime-clusters"
               type="circle"
@@ -595,7 +595,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
             />
           )}
 
-          {!isClusteringValid && (
+          {(!isClusteringValid || localClusters) && (
             <Layer
               id="cluster-count"
               type="symbol"
@@ -635,8 +635,8 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
           />
         </Source>
 
-        {/* If clustered, show convex hulls and colored points */}
-        {isClusteringValid && clusterHullsGeoJSON && (
+        {/* If clustered globally (and local clustering not active), show convex hulls and colored points */}
+        {isClusteringValid && !localClusters && clusterHullsGeoJSON && (
           <Source id="cluster-hulls" type="geojson" data={clusterHullsGeoJSON as any}>
             <Layer
               id="cluster-hulls-fill"
@@ -665,7 +665,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
           </Source>
         )}
 
-        {isClusteringValid && clusteredPointsGeoJSON && (
+        {isClusteringValid && !localClusters && clusteredPointsGeoJSON && (
           <Source id="clustered-points" type="geojson" data={clusteredPointsGeoJSON as any}>
             <Layer
               id="clustered-points-circle"
