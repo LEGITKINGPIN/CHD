@@ -17,7 +17,7 @@ import EdaDashboard from './components/EdaDashboard';
 import CompareAlgorithms from './components/CompareAlgorithms';
 import PatrolIntelligence from './components/PatrolIntelligence';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE_URL = '/api';
 
 export default function App() {
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);

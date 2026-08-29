@@ -1,1 +1,27 @@
-{}
+{
+  "..\\node_modules\\@vis.gl\\react-maplibre\\dist\\components\\map.js -> maplibre-gl": {
+    "id": 4606,
+    "files": []
+  },
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": 5139,
+    "files": [
+      "static/chunks/139.7a5a8e93a21948c1.js"
+    ]
+  },
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": 1646,
+    "files": [
+      "static/chunks/646.f342b7cffc01feb0.js"
+    ]
+  },
+  "App.tsx -> ./components/MapWorkspace": {
+    "id": 644,
+    "files": [
+      "static/css/718ee59ff2172a97.css",
+      "static/chunks/05f6971a.abcd4e8bb7d9336c.js",
+      "static/chunks/456.9de2b95eefb79d23.js",
+      "static/chunks/644.f03248a531dcfa4e.js"
+    ]
+  }
+}
