@@ -157,7 +157,7 @@ def run_clustering(
                 "euclidean" if algorithm in ["K-MEANS", "HIERARCHICAL"] else "haversine"
             )
             silhouette = silhouette_score(
-                filtered_coords, filtered_labels, metric=metric_arg
+                filtered_coords, filtered_labels, metric=metric_arg, sample_size=1000, random_state=42
             )
 
             if algorithm == "DBSCAN":
