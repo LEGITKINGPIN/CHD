@@ -105,7 +105,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
       const layerId = feature.layer.id;
 
       if (layerId === 'crime-clusters') {
-        const clusterId = feature.properties.cluster_id;
+        const clusterId = feature.id ?? feature.properties.cluster_id;
         const map = mapRef.current.getMap();
         const source = map.getSource('crimes-clusters');
 
