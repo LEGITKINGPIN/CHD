@@ -296,6 +296,7 @@ export default function App() {
             setFocusCoordinate([lng, lat]);
             setActiveView('map');
           }}
+          onGoToMap={() => setActiveView('map')}
         />
       ) : null}
     </div>

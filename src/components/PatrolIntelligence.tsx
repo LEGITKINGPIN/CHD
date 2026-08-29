@@ -7,9 +7,10 @@ interface PatrolIntelligenceProps {
   clusteringResult: ClusteringResult | null;
   algorithm: string;
   onLocateHotspot: (lng: number, lat: number) => void;
+  onGoToMap?: () => void;
 }
 
-export default function PatrolIntelligence({ clusteringResult, algorithm, onLocateHotspot }: PatrolIntelligenceProps) {
+export default function PatrolIntelligence({ clusteringResult, algorithm, onLocateHotspot, onGoToMap }: PatrolIntelligenceProps) {
   
   if (!clusteringResult || !clusteringResult.hotspot_rankings) {
     return (
@@ -19,9 +20,17 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
             <ShieldAlert className="w-8 h-8 text-[var(--color-slate-muted)]" />
           </div>
           <h3 className="text-[18px] font-bold text-[var(--color-navy-deep)] mb-2">No Patrol Intelligence Available</h3>
-          <p className="text-[14px] text-[var(--color-slate-muted)] font-medium">
+          <p className="text-[14px] text-[var(--color-slate-muted)] font-medium mb-6">
             Please run a clustering analysis (e.g., K-Means or DBSCAN) from the Map view to generate strategic decision-support intelligence for historical hotspots.
           </p>
+          {onGoToMap && (
+            <button 
+              onClick={onGoToMap}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[var(--color-primary)] text-white font-bold text-[14px] rounded-[var(--radius-control)] shadow-sm hover:opacity-90 transition-opacity"
+            >
+              <MapPin className="w-4 h-4" /> Go to Map View
+            </button>
+          )}
         </div>
       </div>
     );
