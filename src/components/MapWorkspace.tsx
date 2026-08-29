@@ -164,7 +164,8 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
   useEffect(() => {
     if (focusCoordinate && mapRef.current) {
       const map = mapRef.current.getMap();
-      map.flyTo({ center: focusCoordinate, zoom: 14, duration: 1500 });
+      map.flyTo({ center: focusCoordinate, zoom: 15, duration: 1500 });
+      setSearchQuery(`${focusCoordinate[1].toFixed(4)}, ${focusCoordinate[0].toFixed(4)}`);
     }
   }, [focusCoordinate]);
 
@@ -464,18 +465,18 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
       
       {/* Top Left Controls: Search Bar */}
       <div className="absolute top-4 z-10 w-[calc(100vw-72px)] md:w-80 transition-[left] duration-300 ease-in-out max-md:left-14 md:!left-[calc(var(--sidebar-offset,0px)+16px)]">
-        <form onSubmit={handleSearch} className="flex bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
+        <form onSubmit={handleSearch} className="flex bg-[var(--color-surface)]/85 backdrop-blur-md rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
           <input 
             type="text" 
             placeholder="Search address or lat, lng..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 text-[13px] outline-none text-[var(--color-navy-deep)] bg-[var(--color-surface)] placeholder:text-[var(--color-slate-muted)] font-medium"
+            className="flex-1 px-4 py-2 text-[13px] outline-none text-[var(--color-navy-deep)] bg-transparent placeholder:text-[var(--color-slate-muted)] font-medium"
           />
           <button 
             type="submit" 
             disabled={isSearching}
-            className="px-4 bg-[var(--color-background)] text-[var(--color-slate)] hover:text-[var(--color-primary)] border-l border-[var(--color-border)] hover:bg-[var(--color-surface-soft)] transition-colors disabled:opacity-50 flex items-center justify-center"
+            className="px-4 bg-transparent text-[var(--color-slate)] hover:text-[var(--color-primary)] border-l border-[var(--color-border)] hover:bg-[var(--color-surface-soft)]/50 transition-colors disabled:opacity-50 flex items-center justify-center"
           >
             {isSearching ? (
                <div className="w-4 h-4 border-2 border-[var(--color-slate-muted)] border-t-transparent rounded-full animate-spin"/>

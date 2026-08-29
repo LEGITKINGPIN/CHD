@@ -126,12 +126,12 @@ export default function Sidebar({
       style={{ width: isDesktopCollapsed ? '0px' : (typeof window !== 'undefined' && window.innerWidth < 768 ? (isOpen ? 'min(320px, 85vw)' : '0px') : `${sidebarWidth}px`) }}
     >
       <div 
-        className={`absolute top-0 bottom-0 left-0 bg-[var(--color-surface)] border-r border-[var(--color-border)] flex flex-col h-full transition-transform duration-300 ease-in-out shadow-sm ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'} ${isDesktopCollapsed ? 'md:-translate-x-full' : 'md:translate-x-0'}`}
+        className={`absolute top-0 bottom-0 left-0 bg-[var(--color-surface)]/85 backdrop-blur-md border-r border-[var(--color-border)] flex flex-col h-full transition-transform duration-300 ease-in-out shadow-sm ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'} ${isDesktopCollapsed ? 'md:-translate-x-full' : 'md:translate-x-0'}`}
         style={{ width: typeof window !== 'undefined' && window.innerWidth < 768 ? 'min(320px, 85vw)' : `${sidebarWidth}px` }}
       >
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
       {/* 1. DATASET REGISTRY */}
-      <div className="p-4 border-b border-[var(--color-border)] mt-12 md:mt-0 bg-[var(--color-background)]">
+      <div className="p-4 border-b border-[var(--color-border)] mt-12 md:mt-0 bg-transparent">
         <h2 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
           <Database className="w-3.5 h-3.5" />
           Dataset Registry
@@ -196,7 +196,7 @@ export default function Sidebar({
       </div>
 
       {/* 2. DATA SUMMARY */}
-      <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+      <div className="p-4 border-b border-[var(--color-border)] bg-transparent">
         <h2 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
           <Map className="w-3.5 h-3.5" />
           Data Summary
@@ -218,7 +218,7 @@ export default function Sidebar({
       </div>
 
       {/* 3. MAP FILTERS */}
-      <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+      <div className="p-4 border-b border-[var(--color-border)] bg-transparent">
         <h2 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-4 flex items-center gap-2">
           <SlidersHorizontal className="w-3.5 h-3.5" />
           Map Filters
@@ -285,7 +285,7 @@ export default function Sidebar({
       </div>
 
       {/* 4. SPATIAL CLUSTERING */}
-      <div className="p-4 flex-1 bg-[var(--color-surface)]">
+      <div className="p-4 flex-1 bg-transparent">
         <h2 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-4 flex items-center gap-2">
           <Activity className="w-3.5 h-3.5" />
           Spatial Clustering
@@ -352,7 +352,7 @@ export default function Sidebar({
       </div>
 
       {/* 5. ANALYSIS ACTIONS */}
-      <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-background)]">
+      <div className="p-4 border-t border-[var(--color-border)] bg-transparent">
         <div className="space-y-2">
           <button
             onClick={handleRun}
