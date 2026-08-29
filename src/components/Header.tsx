@@ -48,13 +48,6 @@ export default function Header({ activeView, setActiveView }: HeaderProps) {
           })}
         </div>
       </div>
-
-      <div className="flex items-center shrink-0">
-        <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 bg-emerald-50 text-[var(--color-success)] text-[11px] font-semibold rounded-full border border-emerald-100" title="SYSTEM HEALTH: OPTIMAL">
-          <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-[var(--color-success)] shadow-[0_0_4px_rgba(16,185,129,0.5)]"></span>
-          <span className="hidden md:inline">SYSTEM HEALTH: OPTIMAL</span>
-        </div>
-      </div>
     </header>
   );
 }
