@@ -10,42 +10,65 @@
 - **Action**: Random Forest model implementation with Chronological train/test split.
 - **Status**: COMPLETED
 
-## Execution & Evaluation
-- **Date**: 2026-08-26
-- **Action**: Run evaluations on test split.
-- **Status**: PENDING
-
 ## Integration Phase (Kartik Parashar to Main Hotspot)
 - **Date**: 2026-08-29
 - **Source Project**: Kartik Parashar
 - **Feature**: Hotspot Ranking via Convex Hull Area and Intensity Score
-- **Previous Main Hotspot State**: Returned raw cluster labels and centroids without density-based spatial ranking.
+- **Previous State**: Returned raw cluster labels and centroids without density-based spatial ranking.
 - **Imported Capability**: Quantitative density score per spatial cluster (Crimes per KM²).
 - **Technical Modification**: Added Convex Hull area calculation in `ml_engine.py` using `scipy.spatial.ConvexHull`, executed asynchronously within the ThreadPoolExecutor.
-- **Reason for Adoption**: Provides defensible spatial interpretation of risk severity beyond raw cluster membership.
-- **Performance Impact**: Minor $O(n \log n)$ overhead per cluster inside the asynchronous executor; frontend map remains completely unblocked.
-- **Scientific Impact**: Enhances evaluation by providing a scalable intensity metric for density-based algorithms (DBSCAN).
 - **Research Paper Section Affected**: Methodology, Model Comparison.
-- **Tests Added**: Unit tests pending.
 
 - **Date**: 2026-08-29
-- **Source Project**: Kartik Parashar
 - **Feature**: Grid-Based Spatial Risk Prediction
-- **Previous Main Hotspot State**: `risk_model.py` synthesized a purely deterministic target based on existing features (tautological model).
-- **Imported Capability**: Aggregation of incidents into 1km² grids to predict relative historical risk based on actual historical volume distributions.
-- **Technical Modification**: Modified `risk_model.py` to aggregate records by spatial grid cell (0.01 degree resolution) before Random Forest training.
-- **Reason for Adoption**: A scientifically valid supervised prediction target based on historical spatial density instead of synthetic derivation.
-- **Performance Impact**: Requires GroupBy operations. Will be executed strictly inside `ml_executor` to prevent FastAPI event loop blocking.
-- **Scientific Impact**: Transforms the prediction pipeline from a structural demonstration into a testable spatial risk predictor.
+- **Previous State**: `risk_model.py` synthesized a purely deterministic target (tautological model).
+- **Imported Capability**: 1km² grid aggregation for relative historical risk prediction via Random Forest.
+- **Technical Modification**: Modified `risk_model.py` to aggregate records by spatial grid cell (0.01° resolution) before training.
 - **Research Paper Section Affected**: Methodology.
-- **Tests Added**: Unit tests pending.
 
 ## Final Project Alignment Phase
 - **Date**: 2026-08-29
-- **Action**: Comprehensive repository audit and feature implementation to align with official academic problem statement and objectives.
+- **Action**: Comprehensive audit and feature implementation aligned with academic problem statement.
 - **Key Implementations**:
-  - **EDA Dashboard**: Created `EdaDashboard.tsx` and `/api/eda` to analyze categorical (crime type) and spatial (district) crime distributions using actual data.
-  - **Algorithm Comparison**: Built `CompareAlgorithms.tsx` and `/api/compare-clusters` allowing concurrent execution of K-Means, DBSCAN, and Hierarchical clustering. Returns mathematically verified Silhouette, Davies-Bouldin, and Calinski-Harabasz metrics based on properly transformed CRS systems.
-  - **Patrol Intelligence**: Extended `hotspot_rankings` to include dominant crime and peak temporal periods per hotspot, rendering them as strategic decision-support cards.
-  - **Performance Security**: Ensured all intensive ML computations remain isolated within the `ProcessPoolExecutor` utilizing asynchronous semaphores, maintaining 60fps UI responsiveness.
+  - **EDA Dashboard**: `EdaDashboard.tsx` + `/api/eda` — categorical and spatial crime distribution analysis.
+  - **Algorithm Comparison**: `CompareAlgorithms.tsx` + `/api/compare-clusters` — concurrent K-Means, DBSCAN, Hierarchical with verified Silhouette, Davies-Bouldin, Calinski-Harabasz metrics.
+  - **Patrol Intelligence**: Hotspot cards with dominant crime type, peak temporal period, and coordinates.
+  - **Performance Security**: All ML computations isolated in `ThreadPoolExecutor` with semaphore concurrency control.
 - **Status**: COMPLETED
+
+## UI Modernization Phase
+- **Date**: 2026-08-29
+- **Action**: Professional GIS/spatial-intelligence UI refinement.
+- **Key Changes**:
+  - Sidebar converted to overlay (absolute positioning over map).
+  - Map style switcher relocated to bottom-left as floating icon.
+  - CHD text-based logo replacing icon logo.
+  - Search bar and layer button dynamically offset from sidebar via CSS variable `--sidebar-offset`.
+  - Invisible scrollbars in sidebar.
+  - Local area analysis panel with DBSCAN/K-Means/Hierarchical clustering within user-defined radius.
+- **Status**: COMPLETED
+
+## Infrastructure Migration: Vite → Next.js App Router
+- **Date**: 2026-08-29
+- **Action**: Migrated frontend from Vite + custom Express proxy to Next.js 15 App Router.
+- **Key Changes**:
+  - `src/app/layout.tsx` — root HTML layout replacing `index.html`.
+  - `src/app/page.tsx` — single Next.js route wrapping existing `App.tsx` ("use client").
+  - `next.config.mjs` — API proxy rewrites: `/api/*` → `${FASTAPI_URL}/api/*` (env-var driven).
+  - `postcss.config.mjs` — Tailwind v4 PostCSS integration replacing `@tailwindcss/vite`.
+  - `MapWorkspace` dynamically imported with `{ ssr: false }` to prevent MapLibre window errors during SSR.
+  - `VITE_API_URL` → `NEXT_PUBLIC_API_URL` (or relative `/api` with proxy).
+  - Legacy files (`vite.config.ts`, `server.ts`, `src/main.tsx`) preserved (not deleted).
+  - `.next/` added to `.gitignore`.
+- **Build Result**: `✓ Compiled successfully` — Exit code 0.
+- **Server**: HTTP 200 on `localhost:3000`.
+- **Research Paper Section Affected**: System Architecture, Experimental Setup.
+- **Status**: COMPLETED
+
+## Deployment Configuration
+- **Date**: 2026-08-29
+- **Vercel**: Frontend auto-deploys from `main` branch.
+- **Render**: Backend auto-deploys from `main` branch.
+- **CORS**: Fully open (`allow_origins=["*"]`) to support direct Vercel→Render API calls.
+- **Required Env Var**: `FASTAPI_URL=https://chd-548a.onrender.com` must be set in Vercel dashboard.
+- **Branch Strategy**: `v0.9` is release branch; `main` is integration target for Vercel/Render auto-deploy.
