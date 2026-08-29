@@ -15,6 +15,7 @@ class CrimeRecordSchema(BaseModel):
     is_weekend: bool
     is_night: bool
     district: str | None = "UNKNOWN"
+    police_station: str | None = None
     description: str | None = "UNKNOWN"
     arrest: bool
 

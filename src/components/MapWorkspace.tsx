@@ -969,6 +969,12 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
                     <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">District</div>
                     <div className="text-[13px] font-semibold text-[var(--color-navy-deep)]">{selectedCrime.district}</div>
                   </div>
+                  {selectedCrime.police_station && (
+                  <div>
+                    <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Police Station</div>
+                    <div className="text-[13px] font-semibold text-[var(--color-navy-deep)]">{selectedCrime.police_station}</div>
+                  </div>
+                  )}
                   <div>
                     <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Status</div>
                     <div className={`text-[13px] font-bold ${selectedCrime.arrest ? "text-[var(--color-teal)]" : "text-[var(--color-rose)]"}`}>
@@ -981,7 +987,24 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
                   </div>
                   <div>
                     <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Record ID</div>
-                    <div className="text-[12px] font-mono text-[var(--color-slate)] truncate" title={selectedCrime.id}>{selectedCrime.id || 'N/A'}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-[12px] font-mono text-[var(--color-slate)] truncate" title={selectedCrime.id}>{selectedCrime.id || 'N/A'}</div>
+                      {selectedCrime.id && (
+                        <button 
+                          onClick={(e) => {
+                            navigator.clipboard.writeText(selectedCrime.id);
+                            const btn = e.currentTarget;
+                            const originalHtml = btn.innerHTML;
+                            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                            setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                          }}
+                          title="Copy ID"
+                          className="text-[var(--color-slate-muted)] hover:text-[var(--color-primary)] transition-colors p-1 shrink-0 bg-[var(--color-surface)] hover:bg-[var(--color-background)] rounded"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 

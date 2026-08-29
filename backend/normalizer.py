@@ -145,7 +145,17 @@ class DatasetLoader:
                 )
                 primary_type = str(row.get("Primary Type", "UNKNOWN"))
                 date_str = str(row.get("Date", "UNKNOWN"))
-                district_str = str(row.get("District", "UNKNOWN"))
+                raw_district = str(row.get("District", "UNKNOWN"))
+                
+                # Check if district contains police station in parentheses e.g. "New Delhi (Parliament Street)"
+                district_str = raw_district
+                police_station_str = None
+                if "(" in raw_district and raw_district.endswith(")"):
+                    parts = raw_district.split("(", 1)
+                    if len(parts) == 2:
+                        district_str = parts[0].strip()
+                        police_station_str = parts[1].replace(")", "").strip()
+                        
                 desc_str = str(row.get(desc_col, "UNKNOWN")) if desc_col else "UNKNOWN"
                 arrest_bool = bool(row.get("Arrest", False))
 
@@ -170,6 +180,7 @@ class DatasetLoader:
                         is_weekend=is_weekend,
                         is_night=is_night,
                         district=district_str,
+                        police_station=police_station_str,
                         description=desc_str,
                         arrest=arrest_bool,
                     )

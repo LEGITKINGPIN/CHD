@@ -6,6 +6,7 @@ export interface CrimeRecord {
   date: string;
   hour: number;
   district: string;
+  police_station?: string | null;
   description: string;
   arrest: boolean;
 }

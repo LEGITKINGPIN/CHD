@@ -119,4 +119,19 @@ DATASET_REGISTRY: dict[str, DatasetMeta] = {
             supports_risk_prediction=True,
         ),
     ),
+    "london": DatasetMeta(
+        key="london",
+        display_name="London Crime Sample (UK Police API)",
+        path="data/raw/london_crime_sample.csv",
+        crs="WGS84",
+        coordinate_columns=["Latitude", "Longitude"],
+        temporal_columns=["Date"],
+        capabilities=DatasetCapabilities(
+            supports_district=True,
+            supports_time=True,
+            supports_date=True,
+            supports_crime_type=True,
+            supports_risk_prediction=True,
+        ),
+    ),
 }

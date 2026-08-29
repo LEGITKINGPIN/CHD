@@ -25,7 +25,18 @@ from .registry import DATASET_REGISTRY
 # Create DB tables
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Crime Hotspot Detection API")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Prefetch the default dataset on startup to ensure it's cached
+    try:
+        DatasetLoader.get_data("delhi")
+    except Exception as e:
+        logger.error(f"Failed to prefetch default dataset: {e}")
+    yield
+
+app = FastAPI(title="Crime Hotspot Detection API", lifespan=lifespan)
 
 # Strict CORS using environment fallback
 frontend_origins = os.getenv("FRONTEND_ORIGINS", "http://localhost:5173").split(",")
@@ -78,13 +89,7 @@ def get_or_create_dataset(
     return dataset_id
 
 
-@app.on_event("startup")
-def startup_event():
-    # Prefetch the default dataset on startup to ensure it's cached
-    try:
-        DatasetLoader.get_data("delhi")
-    except Exception as e:
-        logger.error(f"Failed to prefetch default dataset: {e}")
+
 
 
 @app.get("/api/health")
@@ -593,3 +598,6 @@ def list_experiments(db: Session = Depends(get_db)):
 
     # Merge or return separately; returning separately for normalized consumption
     return {"clustering": clustering, "classification": classification}
+# trigger reload
+
+# reload
