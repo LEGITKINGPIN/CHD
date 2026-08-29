@@ -5,7 +5,10 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { CrimeRecord, ClusteringResult, Metadata, DatasetInfo } from './types';
-import MapWorkspace from './components/MapWorkspace';
+import dynamic from 'next/dynamic';
+
+const MapWorkspace = dynamic(() => import('./components/MapWorkspace'), { ssr: false });
+
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import MetricsPanel from './components/MetricsPanel';
@@ -14,7 +17,7 @@ import EdaDashboard from './components/EdaDashboard';
 import CompareAlgorithms from './components/CompareAlgorithms';
 import PatrolIntelligence from './components/PatrolIntelligence';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function App() {
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);

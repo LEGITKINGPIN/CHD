@@ -69,9 +69,14 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
 
     return {
       labels,
+      centroids: [],
       metrics: {
         numClusters,
-        silhouette: null
+        silhouette: null,
+        daviesBouldin: null,
+        calinskiHarabasz: null,
+        numNoise: 0,
+        runtimeMs: 0,
       },
       centers: null,
       hotspot_rankings: rankings
@@ -328,11 +333,11 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         let clustered;
         if (localAlgorithm === 'K-MEANS') {
           const k = Math.min(5, Math.max(1, Math.floor(crimesInRadiusGeoJSON.features.length / 10)));
-          clustered = turf.clustersKmeans(crimesInRadiusGeoJSON, { numberOfClusters: k });
+          clustered = turf.clustersKmeans(crimesInRadiusGeoJSON as any, { numberOfClusters: k });
         } else if (localAlgorithm === 'DBSCAN') {
           // DBSCAN with distance in kilometers. 100 meters = 0.1km.
           // Using 0.2km radius, min 3 points for typical urban density.
-          clustered = turf.clustersDbscan(crimesInRadiusGeoJSON, 0.2, { units: 'kilometers', minPoints: 3 });
+          clustered = turf.clustersDbscan(crimesInRadiusGeoJSON as any, 0.2, { units: 'kilometers', minPoints: 3 });
         } else if (localAlgorithm === 'HIERARCHICAL') {
           const features = crimesInRadiusGeoJSON.features;
           const k = Math.min(5, Math.max(1, Math.floor(features.length / 10)));
@@ -514,7 +519,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         ref={mapRef}
         mapLib={maplibregl}
         style={{ width: '100%', height: '100%' }}
-        mapLibreLogo={false}
+        maplibreLogo={false}
         initialViewState={initialViewState}
         mapStyle={currentStyle}
         interactiveLayerIds={['crime-points', 'crime-clusters', 'clustered-points-circle', 'cluster-hulls-fill']}
