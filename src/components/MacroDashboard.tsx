@@ -75,56 +75,57 @@ export default function MacroDashboard({ selectedDatasetKeys, selectedTypes = ['
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50">
-        <div className="text-slate-500 font-medium animate-pulse">Analyzing Temporal Trends...</div>
+      <div className="flex-1 flex items-center justify-center bg-[var(--color-background)]">
+        <div className="text-[var(--color-slate)] font-semibold animate-pulse tracking-wide text-sm uppercase">Analyzing Temporal Trends...</div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50">
-        <div className="text-rose-500 font-medium">Insights unavailable: {error}</div>
+      <div className="flex-1 flex items-center justify-center bg-[var(--color-background)]">
+        <div className="text-[var(--color-rose)] font-semibold text-sm">Insights unavailable: {error}</div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 p-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         
         <header className="mb-8 flex justify-between items-end">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Temporal Insights</h2>
-            <p className="text-slate-500">Macro-level time-series analysis for {selectedDatasetKeys.join(', ')}</p>
+            <h2 className="text-[24px] font-bold text-[var(--color-navy-deep)] tracking-tight">Temporal Insights</h2>
+            <p className="text-[14px] text-[var(--color-slate-muted)] mt-1">Macro-level time-series analysis for {selectedDatasetKeys.join(', ')}</p>
           </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Hourly Trend Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 lg:col-span-2">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Hourly Crime Volume</h3>
-            <p className="text-sm text-slate-500 mb-4">Crimes occurring throughout the 24-hour day cycle.</p>
+          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] lg:col-span-2">
+            <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Hourly Crime Volume</h3>
+            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4">Crimes occurring throughout the 24-hour day cycle.</p>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.hourly} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: 'var(--color-slate-muted)', fontSize: 11, fontWeight: 500}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--color-slate-muted)', fontSize: 11, fontWeight: 500}} />
                   <RechartsTooltip 
-                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)'}}
                   />
-                  <Line type="monotone" dataKey="count" stroke="#0ea5e9" strokeWidth={3} dot={false} activeDot={{r: 6}} />
+                  <Line type="monotone" dataKey="count" stroke="var(--color-primary)" strokeWidth={3} dot={false} activeDot={{r: 6}} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Weekly Composition Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Day of Week Distribution</h3>
-            <div className="h-72 flex items-center justify-center relative">
+          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)]">
+            <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Day of Week Distribution</h3>
+            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4">Relative frequency across week days.</p>
+            <div className="h-64 flex items-center justify-center relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -142,7 +143,7 @@ export default function MacroDashboard({ selectedDatasetKeys, selectedTypes = ['
                     ))}
                   </Pie>
                   <RechartsTooltip 
-                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)'}}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -150,26 +151,27 @@ export default function MacroDashboard({ selectedDatasetKeys, selectedTypes = ['
           </div>
 
           {/* Monthly Trend Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Monthly Crime Volume</h3>
-            <div className="h-72">
+          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)]">
+            <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Monthly Crime Volume</h3>
+            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4">Long-term seasonal volume over months.</p>
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.monthly} margin={{ top: 5, right: 0, left: -20, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
                   <XAxis 
                     dataKey="month" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{fill: '#64748b', fontSize: 11}} 
+                    tick={{fill: 'var(--color-slate-muted)', fontSize: 11, fontWeight: 500}} 
                     interval={0}
                     dy={10}
                   />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--color-slate-muted)', fontSize: 11, fontWeight: 500}} />
                   <RechartsTooltip 
-                    cursor={{fill: '#f1f5f9'}}
-                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    cursor={{fill: 'var(--color-background)'}}
+                    contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)'}}
                   />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="var(--color-indigo)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

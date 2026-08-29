@@ -13,13 +13,13 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
   
   if (!clusteringResult || !clusteringResult.hotspot_rankings) {
     return (
-      <div className="flex-1 overflow-y-auto bg-slate-50 p-6 flex items-center justify-center">
-        <div className="bg-white border border-dashed border-slate-300 rounded-xl p-12 text-center max-w-lg">
-          <div className="mx-auto w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-            <ShieldAlert className="w-8 h-8 text-slate-400" />
+      <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-6 flex items-center justify-center">
+        <div className="bg-[var(--color-surface)] border border-dashed border-[var(--color-border)] rounded-[var(--radius-panel)] p-12 text-center max-w-lg">
+          <div className="mx-auto w-16 h-16 bg-[var(--color-background)] rounded-full flex items-center justify-center mb-4">
+            <ShieldAlert className="w-8 h-8 text-[var(--color-slate-muted)]" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 mb-2">No Patrol Intelligence Available</h3>
-          <p className="text-slate-500">
+          <h3 className="text-[18px] font-bold text-[var(--color-navy-deep)] mb-2">No Patrol Intelligence Available</h3>
+          <p className="text-[14px] text-[var(--color-slate-muted)] font-medium">
             Please run a clustering analysis (e.g., K-Means or DBSCAN) from the Map view to generate strategic decision-support intelligence for historical hotspots.
           </p>
         </div>
@@ -30,14 +30,14 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
   const hotspots = clusteringResult.hotspot_rankings.slice(0, 10); // Show top 10
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 p-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         
         <header className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Patrol Intelligence</h2>
-          <p className="text-slate-500 flex items-center gap-2">
-            <span>Decision support based on <strong>{algorithm}</strong> historical clustering results.</span>
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
+          <h2 className="text-[24px] font-bold text-[var(--color-navy-deep)] tracking-tight">Patrol Intelligence</h2>
+          <p className="text-[14px] text-[var(--color-slate-muted)] mt-1 flex items-center gap-2">
+            <span>Decision support based on <strong className="text-[var(--color-navy-deep)]">{algorithm}</strong> historical clustering results.</span>
+            <span className="px-2.5 py-1 bg-[var(--color-indigo)]/10 text-[var(--color-indigo)] text-[11px] font-bold rounded-full border border-[var(--color-indigo)]/20 uppercase tracking-wider">
               STRATEGIC SUPPORT
             </span>
           </p>
@@ -50,88 +50,88 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
             const centroid = clusteringResult.centroids[hotspot.cluster_id];
             
             return (
-              <div key={hotspot.cluster_id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+              <div key={hotspot.cluster_id} className="bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className={clsx(
-                  "px-5 py-3 border-b flex justify-between items-center",
-                  isCritical ? "bg-rose-50 border-rose-100" : isHigh ? "bg-orange-50 border-orange-100" : "bg-slate-50 border-slate-200"
+                  "px-6 py-4 border-b flex justify-between items-center",
+                  isCritical ? "bg-[var(--color-rose)]/5 border-[var(--color-rose)]/10" : isHigh ? "bg-orange-50 border-orange-100" : "bg-[var(--color-surface-soft)] border-[var(--color-border)]"
                 )}>
                   <div className="flex items-center gap-3">
                     <span className={clsx(
-                      "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white",
-                      isCritical ? "bg-rose-600" : isHigh ? "bg-orange-500" : "bg-slate-400"
+                      "flex items-center justify-center w-7 h-7 rounded-full text-[13px] font-bold text-white",
+                      isCritical ? "bg-[var(--color-rose)]" : isHigh ? "bg-orange-500" : "bg-[var(--color-slate)]"
                     )}>
                       {index + 1}
                     </span>
-                    <h3 className="font-bold text-slate-900 text-lg">Hotspot #{hotspot.cluster_id}</h3>
+                    <h3 className="font-bold text-[var(--color-navy-deep)] text-[18px]">Hotspot #{hotspot.cluster_id}</h3>
                   </div>
                   <span className={clsx(
-                    "px-2.5 py-1 text-xs font-bold rounded-md border",
-                    isCritical ? "bg-rose-100 text-rose-700 border-rose-200" : 
+                    "px-2.5 py-1 text-[11px] font-bold rounded-[var(--radius-control)] border uppercase tracking-wider",
+                    isCritical ? "bg-[var(--color-rose)]/10 text-[var(--color-rose)] border-[var(--color-rose)]/20" : 
                     isHigh ? "bg-orange-100 text-orange-700 border-orange-200" : 
-                    "bg-slate-100 text-slate-700 border-slate-200"
+                    "bg-[var(--color-slate)]/10 text-[var(--color-slate)] border-[var(--color-border)]"
                   )}>
                     {hotspot.risk_category.toUpperCase()}
                   </span>
                 </div>
 
                 {/* Body */}
-                <div className="p-5 flex-1 flex flex-col gap-4">
+                <div className="p-6 flex-1 flex flex-col gap-5">
                   
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <TrendingUp className="w-3.5 h-3.5" /> Total Incidents
+                      <p className="text-[11px] text-[var(--color-slate-muted)] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5 text-[var(--color-primary)]" /> Total Incidents
                       </p>
-                      <p className="text-lg font-bold text-slate-900">{hotspot.volume}</p>
+                      <p className="text-[24px] font-black text-[var(--color-navy-deep)] leading-none">{hotspot.volume}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" /> Density
+                      <p className="text-[11px] text-[var(--color-slate-muted)] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[var(--color-teal)]" /> Density
                       </p>
-                      <p className="text-lg font-bold text-slate-900">{hotspot.density_per_km2.toLocaleString()} / km²</p>
+                      <p className="text-[24px] font-black text-[var(--color-navy-deep)] leading-none">{hotspot.density_per_km2.toLocaleString()} <span className="text-[14px] text-[var(--color-slate-muted)] font-medium">/ km²</span></p>
                     </div>
                   </div>
 
                   {/* Temporal & Categorical */}
-                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 space-y-3">
+                  <div className="bg-[var(--color-background)] p-4 rounded-[var(--radius-control)] border border-[var(--color-border)] space-y-3.5">
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-4 h-4 text-slate-400 mt-0.5" />
+                      <AlertTriangle className="w-4 h-4 text-[var(--color-slate-muted)] mt-0.5" />
                       <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase">Dominant Crime</p>
-                        <p className="font-medium text-slate-900">{(hotspot as any).dominant_crime || "Unknown"}</p>
+                        <p className="text-[11px] text-[var(--color-slate-muted)] font-bold uppercase tracking-wider">Dominant Crime</p>
+                        <p className="font-semibold text-[13px] text-[var(--color-navy-deep)]">{(hotspot as any).dominant_crime || "Unknown"}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Clock className="w-4 h-4 text-slate-400 mt-0.5" />
+                      <Clock className="w-4 h-4 text-[var(--color-slate-muted)] mt-0.5" />
                       <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase">Peak Period</p>
-                        <p className="font-medium text-slate-900">{(hotspot as any).peak_hour || "Unknown"}</p>
+                        <p className="text-[11px] text-[var(--color-slate-muted)] font-bold uppercase tracking-wider">Peak Period</p>
+                        <p className="font-semibold text-[13px] text-[var(--color-navy-deep)]">{(hotspot as any).peak_hour || "Unknown"}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Calendar className="w-4 h-4 text-slate-400 mt-0.5" />
+                      <Calendar className="w-4 h-4 text-[var(--color-slate-muted)] mt-0.5" />
                       <div>
-                        <p className="text-xs text-slate-500 font-semibold uppercase">Peak Day</p>
-                        <p className="font-medium text-slate-900">{(hotspot as any).peak_day || "Unknown"}</p>
+                        <p className="text-[11px] text-[var(--color-slate-muted)] font-bold uppercase tracking-wider">Peak Day</p>
+                        <p className="font-semibold text-[13px] text-[var(--color-navy-deep)]">{(hotspot as any).peak_day || "Unknown"}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* AI Insight */}
-                  <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-3">
-                    <p className="text-sm italic text-slate-600 bg-blue-50/50 p-3 rounded-md border border-blue-100/50">
+                  <div className="mt-auto pt-5 border-t border-[var(--color-border)] flex flex-col gap-4">
+                    <p className="text-[13px] italic text-[var(--color-primary)] font-medium bg-[var(--color-primary)]/5 p-4 rounded-[var(--radius-control)] border border-[var(--color-primary)]/10">
                       "{(hotspot as any).insight || "Historical concentration indicates consistent incident volume."}"
                     </p>
                     <div className="flex justify-between items-center">
-                      <div className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                      <div className="text-[11px] font-mono font-medium text-[var(--color-slate-muted)] bg-[var(--color-background)] px-2.5 py-1.5 rounded-[var(--radius-control)] border border-[var(--color-border)]">
                         {centroid ? `${centroid[0].toFixed(4)}, ${centroid[1].toFixed(4)}` : "Coordinates unavailable"}
                       </div>
                       <button 
                         onClick={() => centroid && onLocateHotspot(centroid[1], centroid[0])}
                         disabled={!centroid}
-                        className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                        className="px-4 py-2 bg-[var(--color-navy-deep)] hover:bg-[var(--color-navy)] text-[var(--color-surface)] text-[12px] font-bold rounded-[var(--radius-control)] transition-colors flex items-center gap-2 disabled:opacity-50"
                       >
                         <MapPin className="w-3.5 h-3.5" /> View on Map
                       </button>
@@ -145,7 +145,7 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
         </div>
 
         {hotspots.length === 0 && (
-          <div className="text-center text-slate-500 p-8">No valid hotspots detected in the current clustering run.</div>
+          <div className="text-center text-[var(--color-slate-muted)] font-medium p-8">No valid hotspots detected in the current clustering run.</div>
         )}
       </div>
     </div>

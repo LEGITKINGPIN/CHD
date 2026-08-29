@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Metadata, DatasetInfo } from '../types';
-import { Crosshair, Activity, SlidersHorizontal, Database, Map } from 'lucide-react';
+import { Crosshair, Activity, SlidersHorizontal, Database, Map, Upload, DownloadCloud, ChevronLeft, ChevronRight } from 'lucide-react';
 import MultiSelectDropdown from './MultiSelectDropdown';
 
 interface SidebarProps {
@@ -54,8 +54,48 @@ export default function Sidebar({
   const [eps, setEps] = useState<number>(0.5);
   const [minPts, setMinPts] = useState<number>(10);
   const [isOpen, setIsOpen] = useState(false);
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(310);
+  const [isResizing, setIsResizing] = useState(false);
   const [liveUrl, setLiveUrl] = useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Expose the current sidebar offset as a CSS variable for the rest of the app to use
+  useEffect(() => {
+    // Only apply the offset if we're not on mobile (mobile uses an overlay that covers the whole screen)
+    const isMobile = window.innerWidth < 768;
+    const offset = isDesktopCollapsed || (isMobile && !isOpen) ? 0 : (isMobile ? 310 : sidebarWidth);
+    document.documentElement.style.setProperty('--sidebar-offset', `${offset}px`);
+    
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      const off = isDesktopCollapsed || (mobile && !isOpen) ? 0 : (mobile ? 310 : sidebarWidth);
+      document.documentElement.style.setProperty('--sidebar-offset', `${off}px`);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isDesktopCollapsed, isOpen, sidebarWidth]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = Math.max(280, Math.min(600, e.clientX));
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   // Just use the first selected dataset for capabilities check for now
   const selectedDataset = datasets.find(d => selectedDatasetKeys.includes(d.key));
@@ -75,35 +115,46 @@ export default function Sidebar({
     <>
     {/* Mobile Toggle */}
     <button 
-      className="md:hidden absolute top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-md border border-slate-200"
+      className="md:hidden absolute top-4 left-4 z-50 bg-[var(--color-surface)] p-2 rounded-[var(--radius-control)] shadow-sm border border-[var(--color-border)] transition-transform hover:bg-[var(--color-surface-soft)]"
       onClick={() => setIsOpen(!isOpen)}
     >
-      <SlidersHorizontal className="w-5 h-5 text-slate-700" />
+      <SlidersHorizontal className="w-5 h-5 text-[var(--color-slate)]" />
     </button>
     
-    <aside className={`absolute md:relative w-80 bg-white border-r border-slate-200 flex flex-col h-full z-40 shadow-sm shrink-0 overflow-y-auto transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-      
-      <div className="p-5 border-b border-slate-100 mt-12 md:mt-0 bg-slate-50">
-        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-2">
-          <Database className="w-4 h-4 text-slate-500" />
+    <aside 
+      className={`absolute h-full z-40 shrink-0 transition-[width] duration-300 ease-in-out ${isResizing ? 'select-none transition-none' : ''}`}
+      style={{ width: isDesktopCollapsed ? '0px' : `${sidebarWidth}px` }}
+    >
+      <div 
+        className={`absolute top-0 bottom-0 left-0 bg-[var(--color-surface)] border-r border-[var(--color-border)] flex flex-col h-full transition-transform duration-300 ease-in-out shadow-sm ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'} ${isDesktopCollapsed ? 'md:-translate-x-full' : 'md:translate-x-0'}`}
+        style={{ width: `${sidebarWidth}px` }}
+      >
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+      {/* 1. DATASET REGISTRY */}
+      <div className="p-4 border-b border-[var(--color-border)] mt-12 md:mt-0 bg-[var(--color-background)]">
+        <h2 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+          <Database className="w-3.5 h-3.5" />
           Dataset Registry
         </h2>
         <select
           value={selectedDatasetKeys[0] || datasets[0]?.key || ''}
           onChange={(e) => onDatasetChange([e.target.value])}
           disabled={isLoadingDataset || datasets.length === 0}
-          className="w-full bg-white border border-slate-200 text-sm rounded-lg px-3 py-2.5 text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-no-repeat disabled:bg-slate-100 disabled:text-slate-400"
-          style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+          className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[13px] rounded-[var(--radius-control)] px-3 py-2 text-[var(--color-navy-deep)] font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent appearance-none bg-no-repeat disabled:bg-[var(--color-background)] disabled:text-[var(--color-slate-muted)]"
+          style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%2364748B\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em 1.2em', paddingRight: '2.5rem' }}
         >
           {datasets.map(d => (
             <option key={d.key} value={d.key}>{d.display_name}</option>
           ))}
         </select>
         {isLoadingDataset && (
-          <div className="mt-2 text-xs text-blue-600 font-medium">Loading dataset...</div>
+          <div className="mt-2 text-[11px] text-[var(--color-primary)] font-semibold flex items-center gap-1.5">
+            <span className="w-2 h-2 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></span>
+            Loading dataset...
+          </div>
         )}
         
-        <div className="mt-4 space-y-2 border-t border-slate-200 pt-3">
+        <div className="mt-3 space-y-2 border-t border-[var(--color-border)] pt-3">
           <input 
             type="file" 
             accept=".csv" 
@@ -117,8 +168,9 @@ export default function Sidebar({
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="w-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 py-2 rounded shadow-sm hover:bg-slate-50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 text-[12px] font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-slate)] py-1.5 rounded-[var(--radius-control)] shadow-sm hover:bg-[var(--color-background)] transition-colors"
           >
+            <Upload className="w-3.5 h-3.5" />
             Upload Custom CSV
           </button>
           
@@ -126,7 +178,7 @@ export default function Sidebar({
             <input 
               type="text" 
               placeholder="Live Socrata API URL" 
-              className="flex-1 text-xs border border-slate-200 rounded px-2 py-1"
+              className="flex-1 text-[12px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-2 py-1.5 text-[var(--color-navy-deep)] focus:outline-none focus:border-[var(--color-primary)]"
               value={liveUrl}
               onChange={(e) => setLiveUrl(e.target.value)}
             />
@@ -134,43 +186,46 @@ export default function Sidebar({
               onClick={() => {
                 if (liveUrl && onLiveFetch) onLiveFetch(liveUrl, 2000);
               }}
-              className="text-xs font-semibold bg-slate-800 text-white px-2 py-1 rounded hover:bg-slate-700 transition-colors"
+              className="flex items-center gap-1 text-[12px] font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-slate)] px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-[var(--color-background)] transition-colors"
             >
+              <DownloadCloud className="w-3.5 h-3.5" />
               Fetch
             </button>
           </div>
         </div>
       </div>
 
-      <div className="p-5 border-b border-slate-100">
-        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Map className="w-4 h-4 text-slate-500" />
+      {/* 2. DATA SUMMARY */}
+      <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        <h2 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+          <Map className="w-3.5 h-3.5" />
           Data Summary
         </h2>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <div className="text-xs text-slate-500 mb-1">Total Records</div>
-            <div className="text-lg font-semibold text-slate-900">
+          <div className="bg-[var(--color-background)] p-2.5 rounded-[var(--radius-control)] border border-[var(--color-border)]">
+            <div className="text-[10px] text-[var(--color-slate-muted)] mb-0.5 font-semibold">Total Records</div>
+            <div className="text-[16px] font-bold text-[var(--color-navy-deep)]">
               {isLoadingDataset ? "..." : metadata?.totalCrimes?.toLocaleString() ?? 0}
             </div>
           </div>
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-            <div className="text-xs text-slate-500 mb-1">Active Region</div>
-            <div className="text-sm font-semibold text-slate-900 line-clamp-2">
+          <div className="bg-[var(--color-background)] p-2.5 rounded-[var(--radius-control)] border border-[var(--color-border)]">
+            <div className="text-[10px] text-[var(--color-slate-muted)] mb-0.5 font-semibold">Active Region</div>
+            <div className="text-[12px] font-semibold text-[var(--color-navy-deep)] line-clamp-2 leading-tight mt-1">
               {datasets.filter(d => selectedDatasetKeys.includes(d.key)).map(d => d.display_name).join(", ") || '...'}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-5 border-b border-slate-100">
-        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-slate-500" />
+      {/* 3. MAP FILTERS */}
+      <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        <h2 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-4 flex items-center gap-2">
+          <SlidersHorizontal className="w-3.5 h-3.5" />
           Map Filters
         </h2>
         <div className="space-y-4">
           <div className={caps?.supports_crime_type ? '' : 'opacity-50'}>
-            <label className="block text-xs font-semibold text-slate-600 mb-2">CRIME CATEGORY</label>
+            <label className="block text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">CRIME CATEGORY</label>
             <MultiSelectDropdown
               options={[
                 { value: 'ALL', label: 'All Categories' },
@@ -184,7 +239,7 @@ export default function Sidebar({
           </div>
           
           <div className={caps?.supports_district ? '' : 'opacity-50'}>
-            <label className="block text-xs font-semibold text-slate-600 mb-2">DISTRICT</label>
+            <label className="block text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">DISTRICT</label>
             <MultiSelectDropdown
               options={[
                 { value: 'ALL', label: 'All Districts' },
@@ -198,66 +253,61 @@ export default function Sidebar({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-2">ARREST STATUS</label>
-            <div className="flex flex-row gap-5">
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+            <label className="block text-[10px] font-bold text-[var(--color-slate-muted)] mb-2 uppercase">ARREST STATUS</label>
+            <div className="flex flex-row gap-4">
+              <label className="flex items-center gap-2 text-[13px] font-medium text-[var(--color-navy-deep)] cursor-pointer group">
                 <input 
                   type="checkbox" 
-                  className="w-4 h-4 text-rose-500 rounded border-slate-300 focus:ring-rose-500"
+                  className="w-4 h-4 text-[var(--color-primary)] rounded-[4px] border-[var(--color-border-strong)] focus:ring-[var(--color-primary)] bg-[var(--color-surface)]"
                   checked={selectedArrest.includes('Arrest Made')}
                   onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedArrest(['Arrest Made']);
-                    } else {
-                      setSelectedArrest(['ALL']);
-                    }
+                    if (e.target.checked) setSelectedArrest(['Arrest Made']);
+                    else setSelectedArrest(['ALL']);
                   }}
                 />
                 Arrest Made
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <label className="flex items-center gap-2 text-[13px] font-medium text-[var(--color-navy-deep)] cursor-pointer group">
                 <input 
                   type="checkbox" 
-                  className="w-4 h-4 text-rose-500 rounded border-slate-300 focus:ring-rose-500"
+                  className="w-4 h-4 text-[var(--color-primary)] rounded-[4px] border-[var(--color-border-strong)] focus:ring-[var(--color-primary)] bg-[var(--color-surface)]"
                   checked={selectedArrest.includes('Pending/No Arrest')}
                   onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedArrest(['Pending/No Arrest']);
-                    } else {
-                      setSelectedArrest(['ALL']);
-                    }
+                    if (e.target.checked) setSelectedArrest(['Pending/No Arrest']);
+                    else setSelectedArrest(['ALL']);
                   }}
                 />
-                Pending/No Arrest
+                No Arrest
               </label>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-5 flex-1 pb-8">
-        <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-slate-500" />
+      {/* 4. SPATIAL CLUSTERING */}
+      <div className="p-4 flex-1 bg-[var(--color-surface)]">
+        <h2 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-4 flex items-center gap-2">
+          <Activity className="w-3.5 h-3.5" />
           Spatial Clustering
         </h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-2">ALGORITHM</label>
-            <div className="flex bg-slate-100 p-1 rounded-lg">
+            <label className="block text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">ALGORITHM</label>
+            <div className="flex bg-[var(--color-surface-soft)] p-[3px] rounded-[var(--radius-control)] border border-[var(--color-border)]">
               <button
-                className={`flex-1 text-[10px] py-2 rounded-md font-medium transition-colors ${selectedAlgorithm === 'K-MEANS' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 text-[11px] py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'K-MEANS' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'}`}
                 onClick={() => setSelectedAlgorithm('K-MEANS')}
               >
                 K-Means
               </button>
               <button
-                className={`flex-1 text-[10px] py-2 rounded-md font-medium transition-colors ${selectedAlgorithm === 'DBSCAN' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 text-[11px] py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'DBSCAN' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'}`}
                 onClick={() => setSelectedAlgorithm('DBSCAN')}
               >
                 DBSCAN
               </button>
               <button
-                className={`flex-1 text-[10px] py-2 rounded-md font-medium transition-colors ${selectedAlgorithm === 'HIERARCHICAL' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 text-[11px] py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'HIERARCHICAL' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'}`}
                 onClick={() => setSelectedAlgorithm('HIERARCHICAL')}
               >
                 Hierarchical
@@ -265,66 +315,92 @@ export default function Sidebar({
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1">
             {(selectedAlgorithm === 'K-MEANS' || selectedAlgorithm === 'HIERARCHICAL') && (
-              <div className="mb-4">
-                <label className="block text-xs font-semibold text-slate-600 mb-2">NUMBER OF CLUSTERS (k)</label>
+              <div>
+                <label className="block text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">NUMBER OF CLUSTERS (k)</label>
                 <input 
                   type="number" min="2" max="20" 
-                  className="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2"
+                  className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[13px] font-medium text-[var(--color-navy-deep)] rounded-[var(--radius-control)] px-3 py-1.5 focus:outline-none focus:border-[var(--color-primary)]"
                   value={k} onChange={e => setK(parseInt(e.target.value))} 
                 />
               </div>
             )}
             {selectedAlgorithm === 'DBSCAN' && (
-              <div className="mb-4 space-y-3">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-2">RADIUS (eps)</label>
+                  <label className="block text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">RADIUS (eps)</label>
                   <input 
                     type="number" step="0.01" min="0.01" max="10" 
-                    className="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[13px] font-medium text-[var(--color-navy-deep)] rounded-[var(--radius-control)] px-3 py-1.5 focus:outline-none focus:border-[var(--color-primary)]"
                     value={eps} onChange={e => setEps(parseFloat(e.target.value))} 
                   />
-                  <p className="text-[10px] text-slate-500 mt-1">Note: eps is in CRS units (e.g. degrees for WGS84, km for projected).</p>
+                  <p className="text-[10px] text-[var(--color-slate-muted)] mt-1">Note: eps is in CRS units.</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-2">MIN SAMPLES (minPts)</label>
+                  <label className="block text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">MIN SAMPLES (minPts)</label>
                   <input 
                     type="number" min="3" max="50" 
-                    className="w-full bg-slate-50 border border-slate-200 text-sm rounded-lg px-3 py-2"
+                    className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[13px] font-medium text-[var(--color-navy-deep)] rounded-[var(--radius-control)] px-3 py-1.5 focus:outline-none focus:border-[var(--color-primary)]"
                     value={minPts} onChange={e => setMinPts(parseInt(e.target.value))} 
                   />
                 </div>
               </div>
             )}
           </div>
-
-          <div className="pt-2 space-y-2">
-            <button
-              onClick={handleRun}
-              disabled={isClustering || isLoadingDataset}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isClustering ? (
-                <>Processing...</>
-              ) : (
-                <>
-                  <Crosshair className="w-4 h-4" />
-                  Detect Hotspots
-                </>
-              )}
-            </button>
-            {hasClusteringResult && onResetClustering && (
-              <button
-                onClick={onResetClustering}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors"
-              >
-                Clear Results
-              </button>
-            )}
-          </div>
         </div>
       </div>
+
+      {/* 5. ANALYSIS ACTIONS */}
+      <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-background)]">
+        <div className="space-y-2">
+          <button
+            onClick={handleRun}
+            disabled={isClustering || isLoadingDataset}
+            className="w-full bg-[var(--color-indigo)] hover:bg-[var(--color-indigo)]/90 text-white font-semibold py-2.5 rounded-[var(--radius-control)] text-[13px] flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            {isClustering ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                Processing...
+              </>
+            ) : (
+              <>
+                <Crosshair className="w-4 h-4" />
+                Cluster Local Hotspots
+              </>
+            )}
+          </button>
+          {hasClusteringResult && onResetClustering && (
+            <button
+              onClick={onResetClustering}
+              className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-soft)] text-[var(--color-slate)] font-semibold py-2 rounded-[var(--radius-control)] text-[13px] flex items-center justify-center gap-2 transition-colors"
+            >
+              Clear Results
+            </button>
+          )}
+        </div>
+      </div>
+      </div>
+      </div>
+
+        {/* Desktop Collapse Toggle */}
+        <button
+          onClick={() => setIsDesktopCollapsed(!isDesktopCollapsed)}
+          className={`hidden md:flex absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-12 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full items-center justify-center z-50 shadow-sm cursor-pointer hover:bg-[var(--color-surface-soft)] transition-colors ${isDesktopCollapsed ? 'opacity-100 right-0 translate-x-full' : 'opacity-100'}`}
+        >
+          {isDesktopCollapsed ? <ChevronRight className="w-4 h-4 text-[var(--color-slate)]" /> : <ChevronLeft className="w-4 h-4 text-[var(--color-slate)]" />}
+        </button>
+
+      {/* Resize Handle */}
+      {!isDesktopCollapsed && (
+        <div 
+          className="hidden md:block absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-[var(--color-primary)]/20 active:bg-[var(--color-primary)]/30 z-50 group"
+          onMouseDown={(e) => { e.preventDefault(); setIsResizing(true); }}
+        >
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[var(--color-border-strong)] rounded-full group-hover:bg-[var(--color-primary)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        </div>
+      )}
     </aside>
     {isOpen && <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={() => setIsOpen(false)} />}
     </>

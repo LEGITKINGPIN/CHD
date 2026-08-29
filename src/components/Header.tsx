@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Map as MapIcon, BarChart3 } from 'lucide-react';
+import { ShieldAlert, Map as MapIcon, BarChart3, Activity, Layers, ActivitySquare } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface HeaderProps {
@@ -9,23 +9,24 @@ interface HeaderProps {
 
 export default function Header({ activeView, setActiveView }: HeaderProps) {
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-6 shrink-0 shadow-sm z-20">
+    <header className="h-[60px] bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center px-6 shrink-0 shadow-sm z-20">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center">
-          <ShieldAlert className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-center bg-clip-text text-transparent bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-indigo)]">
+          <span className="font-black text-2xl tracking-tighter" style={{ letterSpacing: '-0.05em' }}>CHD</span>
         </div>
-        <div>
-          <h1 className="text-lg font-bold text-slate-900 leading-tight">Crime Hotspot Detection</h1>
-          <p className="text-xs text-slate-500 font-medium tracking-wide uppercase">Crime & Risk Intelligence</p>
+        <div className="pl-3 border-l-2 border-[var(--color-border)]">
+          <h1 className="text-[14px] font-black text-[var(--color-navy-deep)] leading-tight tracking-tight uppercase">Crime Hotspot Detection</h1>
+          <p className="text-[9px] text-[var(--color-primary)] font-bold tracking-widest uppercase">Crime & Risk Intelligence</p>
         </div>
       </div>
+      
       <div className="flex-1 flex justify-center">
-        <div className="bg-slate-100 p-1 rounded-lg flex items-center gap-1 border border-slate-200">
+        <div className="bg-[var(--color-surface-soft)] p-[3px] rounded-[var(--radius-control)] flex items-center gap-1 border border-[var(--color-border)]">
           {[
             { id: 'map', label: 'Map', icon: MapIcon },
             { id: 'eda', label: 'EDA', icon: BarChart3 },
-            { id: 'trends', label: 'Trends', icon: BarChart3 },
-            { id: 'compare', label: 'Compare', icon: BarChart3 },
+            { id: 'trends', label: 'Trends', icon: Activity },
+            { id: 'compare', label: 'Compare', icon: Layers },
             { id: 'patrol', label: 'Patrol Intel', icon: ShieldAlert },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -34,13 +35,13 @@ export default function Header({ activeView, setActiveView }: HeaderProps) {
                 key={tab.id}
                 onClick={() => setActiveView(tab.id as any)}
                 className={clsx(
-                  "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                  "flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200",
                   activeView === tab.id 
-                    ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" 
-                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                    ? "bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm border border-[var(--color-border)]" 
+                    : "text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] hover:bg-[var(--color-border)]/30 border border-transparent"
                 )}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-[14px] h-[14px]" />
                 {tab.label}
               </button>
             );
@@ -49,7 +50,8 @@ export default function Header({ activeView, setActiveView }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-[var(--color-success)] text-[11px] font-semibold rounded-full border border-emerald-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] shadow-[0_0_4px_rgba(16,185,129,0.5)]"></span>
           SYSTEM HEALTH: OPTIMAL
         </div>
       </div>

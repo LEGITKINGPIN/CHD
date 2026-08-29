@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { CrimeRecord, ClusteringResult, Metadata } from '../types';
 import * as turf from '@turf/turf';
 import { Search, Layers, MapPin } from 'lucide-react';
+import MetricsPanel from './MetricsPanel';
 
 interface MapWorkspaceProps {
   crimes: CrimeRecord[];
@@ -14,14 +15,68 @@ interface MapWorkspaceProps {
   setCustomMarker: (marker: {lng: number, lat: number, radiusKm: number} | null) => void;
   onNavigateCompare: () => void;
   focusCoordinate?: [number, number] | null;
+  children?: React.ReactNode;
 }
 
-export default function MapWorkspace({ crimes, clusteringResult, metadata, customMarker, setCustomMarker, onNavigateCompare, focusCoordinate }: MapWorkspaceProps) {
+export default function MapWorkspace({ crimes, clusteringResult, metadata, customMarker, setCustomMarker, onNavigateCompare, focusCoordinate, children }: MapWorkspaceProps) {
   const [hoverInfo, setHoverInfo] = useState<{lng: number, lat: number, props: any, type: string} | null>(null);
   const [selectedCrime, setSelectedCrime] = useState<any>(null);
   const [localClusters, setLocalClusters] = useState<any>(null);
   const [localAlgorithm, setLocalAlgorithm] = useState<'K-MEANS' | 'DBSCAN' | 'HIERARCHICAL'>('K-MEANS');
   const mapRef = useRef<any>(null);
+
+  const localClusteringResult = useMemo(() => {
+    if (!localClusters || !localClusters.features || localClusters.features.length === 0) return null;
+    
+    const labels = localClusters.features.map((f: any) => f.properties.cluster !== undefined ? f.properties.cluster : -1);
+    const uniqueClusters = new Set(labels.filter((l: number) => l !== -1));
+    const numClusters = uniqueClusters.size;
+    
+    const clusterMap = new globalThis.Map();
+    localClusters.features.forEach((f: any) => {
+      const cid = f.properties.cluster !== undefined ? f.properties.cluster : -1;
+      if (cid !== -1) {
+        if (!clusterMap.has(cid)) {
+          clusterMap.set(cid, { features: [] });
+        }
+        clusterMap.get(cid).features.push(f);
+      }
+    });
+
+    const rankings: any[] = [];
+    clusterMap.forEach((data, cid) => {
+      const pts = turf.featureCollection(data.features);
+      let area = 0.01; // minimal area if not computable
+      if (pts.features.length >= 3) {
+        try {
+          const hull = turf.convex(pts);
+          if (hull) area = turf.area(hull) / 1000000;
+        } catch (e) {}
+      }
+      
+      const vol = data.features.length;
+      const density = area > 0 ? vol / area : 0;
+      
+      rankings.push({
+        cluster_id: cid,
+        volume: vol,
+        area_sq_km: parseFloat(area.toFixed(3)),
+        density_per_km2: density,
+        risk_category: density > 100 ? 'Critical Hotspot' : density > 50 ? 'High Risk' : 'Medium Risk'
+      });
+    });
+    rankings.sort((a, b) => b.density_per_km2 - a.density_per_km2);
+
+    return {
+      labels,
+      metrics: {
+        numClusters,
+        silhouette: null
+      },
+      centers: null,
+      hotspot_rankings: rankings
+    };
+  }, [localClusters]);
 
   const MAP_STYLES = [
     { id: 'light', name: 'Light Map', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
@@ -402,22 +457,22 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
     <div className="w-full h-full relative" style={{ width: '100%', height: '100%' }}>
       
       {/* Top Left Controls: Search Bar */}
-      <div className="absolute top-4 left-4 z-10 w-80">
-        <form onSubmit={handleSearch} className="flex bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden">
+      <div className="absolute top-4 z-10 w-80 transition-[left] duration-300 ease-in-out" style={{ left: 'calc(var(--sidebar-offset, 0px) + 16px)' }}>
+        <form onSubmit={handleSearch} className="flex bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
           <input 
             type="text" 
             placeholder="Search address or lat, lng..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2.5 text-sm outline-none text-slate-700"
+            className="flex-1 px-4 py-2 text-[13px] outline-none text-[var(--color-navy-deep)] bg-[var(--color-surface)] placeholder:text-[var(--color-slate-muted)] font-medium"
           />
           <button 
             type="submit" 
             disabled={isSearching}
-            className="px-4 bg-slate-50 text-slate-600 hover:text-slate-900 border-l border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-50 flex items-center justify-center"
+            className="px-4 bg-[var(--color-background)] text-[var(--color-slate)] hover:text-[var(--color-primary)] border-l border-[var(--color-border)] hover:bg-[var(--color-surface-soft)] transition-colors disabled:opacity-50 flex items-center justify-center"
           >
             {isSearching ? (
-               <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"/>
+               <div className="w-4 h-4 border-2 border-[var(--color-slate-muted)] border-t-transparent rounded-full animate-spin"/>
             ) : (
                <Search className="w-4 h-4" />
             )}
@@ -425,19 +480,19 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         </form>
       </div>
 
-      {/* Top Right Controls: Map Layers */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* Bottom Left Controls: Map Layers */}
+      <div className="absolute bottom-4 z-10 transition-[left] duration-300 ease-in-out" style={{ left: 'calc(var(--sidebar-offset, 0px) + 16px)' }}>
         <div className="relative">
           <button 
             onClick={() => setIsLayerMenuOpen(!isLayerMenuOpen)}
-            className="bg-white p-2.5 rounded-lg shadow-md border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-2"
+            className="bg-[var(--color-surface)] p-2.5 rounded-full shadow-sm border border-[var(--color-border)] text-[var(--color-slate)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)] transition-colors flex items-center justify-center"
+            title="Map Style"
           >
             <Layers className="w-5 h-5" />
-            <span className="text-sm font-semibold">Map Style</span>
           </button>
           
           {isLayerMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden py-1">
+            <div className="absolute left-0 bottom-full mb-2 w-40 bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-md border border-[var(--color-border)] overflow-hidden py-1">
               {MAP_STYLES.map(style => (
                 <button
                   key={style.id}
@@ -445,7 +500,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
                     setCurrentStyle(style.url);
                     setIsLayerMenuOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${currentStyle === style.url ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                  className={`w-full text-left px-4 py-2 text-[12px] font-medium transition-colors ${currentStyle === style.url ? 'bg-[var(--color-indigo-soft)] text-[var(--color-primary)] font-semibold' : 'text-[var(--color-slate)] hover:bg-[var(--color-surface-soft)]'}`}
                 >
                   {style.name}
                 </button>
@@ -619,34 +674,34 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
             anchor="bottom"
             offset={15}
           >
-            <div className="p-2 text-sm max-w-[200px] shadow-sm">
+            <div className="p-3 text-[12px] max-w-[220px] shadow-sm rounded-[var(--radius-panel)] bg-[var(--color-surface)] text-[var(--color-navy-deep)] border border-[var(--color-border)]">
               {hoverInfo.type === 'native-cluster' ? (
                 <>
-                  <div className="font-bold text-slate-900 border-b pb-1 mb-1 border-slate-200">
+                  <div className="font-bold text-[13px] border-b pb-1.5 mb-1.5 border-[var(--color-border)]">
                     Crime Cluster
                   </div>
-                  <div className="text-slate-600">Total Crimes: {hoverInfo.props.point_count}</div>
-                  <div className="text-xs text-blue-600 mt-2 italic">Click to zoom in</div>
+                  <div className="text-[var(--color-slate)]">Total Crimes: <span className="font-semibold text-[var(--color-navy-deep)]">{hoverInfo.props.point_count}</span></div>
+                  <div className="text-[10px] text-[var(--color-primary)] mt-2 italic font-medium">Click to zoom in</div>
                 </>
               ) : hoverInfo.type === 'crime' ? (
                 <>
-                  <div className="font-bold text-slate-900 border-b pb-1 mb-1 border-slate-200">{hoverInfo.props.primary_type}</div>
-                  <div className="text-slate-600">Date: {new Date(hoverInfo.props.date).toLocaleDateString()}</div>
-                  <div className="text-slate-600">District: {hoverInfo.props.district}</div>
-                  {hoverInfo.props.arrest && <div className="text-green-600 font-semibold mt-1">Arrest Made</div>}
-                  <div className="text-xs text-blue-600 mt-2 italic">Click for full details</div>
+                  <div className="font-bold text-[13px] border-b pb-1.5 mb-1.5 border-[var(--color-border)]">{hoverInfo.props.primary_type}</div>
+                  <div className="text-[var(--color-slate)]">Date: <span className="font-medium text-[var(--color-navy-deep)]">{new Date(hoverInfo.props.date).toLocaleDateString()}</span></div>
+                  <div className="text-[var(--color-slate)]">District: <span className="font-medium text-[var(--color-navy-deep)]">{hoverInfo.props.district}</span></div>
+                  {hoverInfo.props.arrest && <div className="text-[var(--color-teal)] font-semibold mt-1">Arrest Made</div>}
+                  <div className="text-[10px] text-[var(--color-primary)] mt-2 italic font-medium">Click for full details</div>
                 </>
               ) : (
                 <>
-                  <div className="font-bold text-slate-900 border-b pb-1 mb-1 border-slate-200">
+                  <div className="font-bold text-[13px] border-b pb-1.5 mb-1.5 border-[var(--color-border)]">
                     {hoverInfo.props.clusterId === -1 ? 'Noise Point' : `Cluster ${hoverInfo.props.clusterId}`}
                   </div>
-                  {hoverInfo.props.count && <div className="text-slate-600">Total Crimes: {hoverInfo.props.count}</div>}
+                  {hoverInfo.props.count && <div className="text-[var(--color-slate)]">Total Crimes: <span className="font-semibold text-[var(--color-navy-deep)]">{hoverInfo.props.count}</span></div>}
                   {hoverInfo.props.primary_type && (
                     <>
-                      <div className="text-slate-600">Type: {hoverInfo.props.primary_type}</div>
-                      <div className="text-slate-600">District: {hoverInfo.props.district}</div>
-                      <div className="text-xs text-blue-600 mt-2 italic">Click for full details</div>
+                      <div className="text-[var(--color-slate)]">Type: <span className="font-medium text-[var(--color-navy-deep)]">{hoverInfo.props.primary_type}</span></div>
+                      <div className="text-[var(--color-slate)]">District: <span className="font-medium text-[var(--color-navy-deep)]">{hoverInfo.props.district}</span></div>
+                      <div className="text-[10px] text-[var(--color-primary)] mt-2 italic font-medium">Click for full details</div>
                     </>
                   )}
                 </>
@@ -739,38 +794,69 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         {/* The popup is removed from here. The marker stays. */}
       </Map>
 
-      {/* Area Analysis Panel (Moved to bottom right, off the map pin) */}
-      {customMarker && (
-        <div className="absolute bottom-6 right-6 z-20 bg-white/90 backdrop-blur-md rounded-xl shadow-2xl p-4 w-72 border border-slate-200">
-          <div className="font-bold text-slate-900 border-b pb-2 mb-3 border-slate-200 flex justify-between items-center">
+      {/* Right Side Panel Stack */}
+      <div className="absolute top-4 right-4 bottom-4 z-20 flex flex-col items-end gap-4 pointer-events-none w-80">
+        
+        {/* Top: Metrics Panel (Children / Global) */}
+        {children && !localClusteringResult && (
+          <div className="pointer-events-auto flex-1 min-h-0 flex flex-col w-full">
+            {children}
+          </div>
+        )}
+
+        {/* Local Metrics Panel */}
+        {localClusteringResult && (
+          <div className="pointer-events-auto flex-1 min-h-0 flex flex-col w-full">
+            <MetricsPanel result={localClusteringResult} algorithm={`Local ${localAlgorithm}`} />
+          </div>
+        )}
+
+        {/* Bottom: Area Analysis Panel */}
+        {customMarker && (
+          <div className="pointer-events-auto shrink-0 bg-[var(--color-surface)]/95 backdrop-blur-md rounded-[var(--radius-panel)] shadow-lg p-4 w-full border border-[var(--color-border)] max-h-full overflow-y-auto custom-scrollbar">
+            <div className="font-bold text-[13px] text-[var(--color-navy-deep)] border-b pb-2 mb-3 border-[var(--color-border)] flex justify-between items-center">
               Area Analysis
-              <button onClick={() => setCustomMarker(null)} className="text-slate-400 hover:text-rose-500 transition-colors">
+              <button onClick={() => setCustomMarker(null)} className="text-[var(--color-slate-muted)] hover:text-[var(--color-rose)] transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </button>
           </div>
-          <div className="flex justify-between items-end mb-2">
-              <span className="text-xs font-semibold text-slate-500 tracking-wider">RADIUS</span>
-              <span className="text-sm font-bold text-slate-800">{customMarker.radiusKm.toFixed(1)} km</span>
+          <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-bold text-[var(--color-slate-muted)] tracking-widest uppercase">RADIUS</span>
+              <div className="flex items-center gap-1">
+                <input 
+                  type="number"
+                  min="0.1" max="50" step="0.1"
+                  value={Number(customMarker.radiusKm).toString()}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                      setCustomMarker({...customMarker, radiusKm: val});
+                    }
+                  }}
+                  className="w-14 text-right text-[12px] font-bold text-[var(--color-navy-deep)] bg-[var(--color-background)] border border-[var(--color-border)] rounded-[4px] px-1 py-0.5 focus:outline-none focus:border-[var(--color-primary)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="text-[11px] font-bold text-[var(--color-slate-muted)]">km</span>
+              </div>
           </div>
           <input 
               type="range" 
               min="0.1" max="10" step="0.1" 
               value={customMarker.radiusKm}
               onChange={(e) => setCustomMarker({...customMarker, radiusKm: parseFloat(e.target.value)})}
-              className="w-full mb-4 accent-rose-500 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+              className="w-full mb-4 accent-[var(--color-rose)] h-1.5 bg-[var(--color-border)] rounded-full appearance-none cursor-pointer"
           />
-          <div className="bg-rose-50/80 p-3 rounded-lg border border-rose-100 flex items-center justify-between mb-2">
-              <div className="text-xs font-bold text-rose-700 uppercase tracking-wider">Incidents</div>
-              <div className="text-xl font-black text-rose-700">{(crimesInRadiusGeoJSON as any).features.length.toLocaleString()}</div>
+          <div className="bg-[var(--color-rose)]/10 p-3 rounded-[var(--radius-control)] border border-[var(--color-rose)]/20 flex items-center justify-between mb-3">
+              <div className="text-[10px] font-bold text-[var(--color-rose)] uppercase tracking-wider">Incidents</div>
+              <div className="text-[18px] font-black text-[var(--color-rose)]">{(crimesInRadiusGeoJSON as any).features.length.toLocaleString()}</div>
           </div>
           {!localClusters && (crimesInRadiusGeoJSON as any).features.length >= 3 && (
-            <div className="mb-2 bg-slate-50/80 p-2 rounded-lg border border-slate-100">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Algorithm</span>
+            <div className="mb-3 bg-[var(--color-background)] p-3 rounded-[var(--radius-control)] border border-[var(--color-border)]">
+              <div className="flex justify-between items-center mb-2.5">
+                <span className="text-[10px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest">Algorithm</span>
                 <select 
                   value={localAlgorithm}
                   onChange={(e) => setLocalAlgorithm(e.target.value as 'K-MEANS' | 'DBSCAN' | 'HIERARCHICAL')}
-                  className="text-xs bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 font-medium outline-none"
+                  className="text-[11px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[4px] px-1.5 py-0.5 text-[var(--color-navy-deep)] font-semibold outline-none focus:border-[var(--color-primary)]"
                 >
                   <option value="K-MEANS">K-Means</option>
                   <option value="DBSCAN">DBSCAN</option>
@@ -779,93 +865,98 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
               </div>
               <button 
                 onClick={handleLocalClustering}
-                className="w-full bg-slate-800 text-white text-xs font-semibold py-1.5 rounded-md hover:bg-slate-700 transition-colors shadow-sm"
+                className="w-full bg-[var(--color-slate)] text-white text-[11px] font-bold py-1.5 rounded-[var(--radius-control)] hover:bg-[var(--color-navy)] transition-colors shadow-sm"
               >
                 Cluster Local Hotspots
               </button>
             </div>
           )}
           {localClusters && (
-            <div className="text-xs font-semibold text-emerald-700 bg-emerald-50/80 p-2 rounded text-center border border-emerald-100 mb-2">
-              Local clustering active
-            </div>
+            <button 
+              onClick={() => setLocalClusters(null)}
+              className="w-full text-[11px] font-bold text-[var(--color-rose)] bg-[var(--color-rose)]/10 py-1.5 rounded-[var(--radius-control)] border border-[var(--color-rose)]/20 mb-3 hover:bg-[var(--color-rose)]/20 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              Stop Local Clustering
+            </button>
           )}
           <button 
             onClick={onNavigateCompare}
             disabled={(crimesInRadiusGeoJSON as any).features.length < 5}
-            className={`w-full text-white text-xs font-semibold py-2 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 ${(crimesInRadiusGeoJSON as any).features.length < 5 ? "bg-slate-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"}`}
+            className={`w-full text-white text-[12px] font-bold py-2 rounded-[var(--radius-control)] transition-colors shadow-sm flex items-center justify-center gap-2 ${(crimesInRadiusGeoJSON as any).features.length < 5 ? "bg-[var(--color-slate-muted)] cursor-not-allowed" : "bg-[var(--color-indigo)] hover:bg-[var(--color-indigo)]/90"}`}
             title={(crimesInRadiusGeoJSON as any).features.length < 5 ? "Not enough incidents to compare models (requires at least 5)" : "Compare ML Models"}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
             Compare ML Models
           </button>
-          <div className="text-[10px] text-slate-400 mt-3 text-center italic">Click map pin to remove</div>
+          <div className="text-[10px] text-[var(--color-slate-muted)] mt-3 text-center font-medium">Click map pin to remove</div>
         </div>
-      )}
+        )}
+      </div>
       
       {/* Crime Details Modal */}
       {selectedCrime && (
-        <div className="absolute inset-0 z-[60] bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-              <h3 className="font-semibold text-slate-800">Crime Details</h3>
+        <div className="absolute inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-xl max-w-md w-full overflow-hidden flex flex-col border border-[var(--color-border)]">
+            <div className="px-5 py-3.5 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-background)]">
+              <h3 className="text-[14px] font-bold text-[var(--color-navy-deep)] uppercase tracking-wider">Crime Details</h3>
               <button 
                 onClick={() => setSelectedCrime(null)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
+                className="text-[var(--color-slate-muted)] hover:text-[var(--color-rose)] transition-colors"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </button>
             </div>
-            <div className="p-4 overflow-y-auto max-h-[70vh]">
-              <div className="space-y-4">
+            <div className="p-5 overflow-y-auto max-h-[70vh]">
+              <div className="space-y-5">
                 <div>
-                  <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Incident Type</div>
-                  <div className="font-medium text-slate-900 text-lg">{selectedCrime.primary_type}</div>
+                  <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Incident Type</div>
+                  <div className="font-bold text-[var(--color-navy-deep)] text-[18px]">{selectedCrime.primary_type}</div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Date</div>
-                    <div className="text-slate-800">{new Date(selectedCrime.date).toLocaleDateString()}</div>
+                    <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Date</div>
+                    <div className="text-[13px] font-semibold text-[var(--color-navy-deep)]">{new Date(selectedCrime.date).toLocaleDateString()}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Time</div>
-                    <div className="text-slate-800">{selectedCrime.hour}:00</div>
+                    <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Time</div>
+                    <div className="text-[13px] font-semibold text-[var(--color-navy-deep)]">{selectedCrime.hour}:00</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">District</div>
-                    <div className="text-slate-800">{selectedCrime.district}</div>
+                    <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">District</div>
+                    <div className="text-[13px] font-semibold text-[var(--color-navy-deep)]">{selectedCrime.district}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Status</div>
-                    <div className={selectedCrime.arrest ? "text-green-600 font-medium" : "text-amber-600 font-medium"}>
-                      {selectedCrime.arrest ? "Arrest Made" : "Pending/No Arrest"}
+                    <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Status</div>
+                    <div className={`text-[13px] font-bold ${selectedCrime.arrest ? "text-[var(--color-teal)]" : "text-[var(--color-rose)]"}`}>
+                      {selectedCrime.arrest ? "Arrest Made" : "Pending / No Arrest"}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Coordinates</div>
-                    <div className="text-slate-800 font-mono text-sm">{selectedCrime.lat?.toFixed(4)}, {selectedCrime.lng?.toFixed(4)}</div>
+                    <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Coordinates</div>
+                    <div className="text-[12px] font-mono text-[var(--color-slate)]">{selectedCrime.lat?.toFixed(4)}, {selectedCrime.lng?.toFixed(4)}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Record ID</div>
-                    <div className="text-slate-800 font-mono text-sm truncate" title={selectedCrime.id}>{selectedCrime.id || 'N/A'}</div>
+                    <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Record ID</div>
+                    <div className="text-[12px] font-mono text-[var(--color-slate)] truncate" title={selectedCrime.id}>{selectedCrime.id || 'N/A'}</div>
                   </div>
                 </div>
                 
                 {selectedCrime.description && (
                   <div>
-                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Description</div>
-                    <div className="text-slate-800 bg-slate-50 p-3 rounded-md mt-1 border border-slate-100">
+                    <div className="text-[10px] text-[var(--color-slate-muted)] uppercase tracking-widest font-bold mb-1">Description</div>
+                    <div className="text-[12px] text-[var(--color-slate)] font-medium bg-[var(--color-background)] p-3 rounded-[var(--radius-control)] border border-[var(--color-border)] leading-relaxed">
                       {selectedCrime.description}
                     </div>
                   </div>
                 )}
               </div>
             </div>
-            <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
+            <div className="px-5 py-4 border-t border-[var(--color-border)] bg-[var(--color-background)] flex justify-end">
               <button 
                 onClick={() => setSelectedCrime(null)}
-                className="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-md hover:bg-slate-700 transition-colors"
+                className="px-5 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-slate)] hover:bg-[var(--color-surface-soft)] text-[12px] font-bold rounded-[var(--radius-control)] transition-colors"
               >
                 Close
               </button>

@@ -27,25 +27,29 @@ export default function MetricsPanel({ result, algorithm }: MetricsPanelProps) {
   const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#cbd5e1'];
 
   return (
-    <div className="absolute top-4 right-4 w-80 bg-white/95 backdrop-blur shadow-lg rounded-xl border border-slate-200 p-5 z-20">
-      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1">
-        Model Diagnostics
-      </h3>
-      <p className="text-xs text-slate-500 mb-4">{algorithm} execution results</p>
-
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-slate-50 border border-slate-100 rounded-lg p-3">
-          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Clusters</div>
-          <div className="text-xl font-bold text-slate-900">{result.metrics.numClusters}</div>
-        </div>
-        <div className="bg-slate-50 border border-slate-100 rounded-lg p-3" title={silhouetteVal === null ? "Requires >1 valid cluster to compute." : undefined}>
-          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Silhouette</div>
-          <div className="text-xl font-bold text-slate-900">{silhouetteVal !== null ? silhouetteVal.toFixed(3) : 'N/A'}</div>
-        </div>
+    <div className="w-80 bg-[var(--color-surface)]/95 backdrop-blur shadow-lg rounded-[var(--radius-panel)] border border-[var(--color-border)] flex flex-col max-h-full">
+      
+      <div className="p-5 border-b border-[var(--color-border)] shrink-0 bg-[var(--color-background)] rounded-t-[var(--radius-panel)]">
+        <h3 className="text-[11px] font-bold text-[var(--color-slate-muted)] uppercase tracking-widest mb-1">
+          Model Diagnostics
+        </h3>
+        <p className="text-[14px] font-bold text-[var(--color-navy-deep)] leading-tight">{algorithm} execution results</p>
       </div>
 
+      <div className="p-5 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="bg-[var(--color-background)] border border-[var(--color-border)] rounded-[var(--radius-control)] p-3">
+            <div className="text-[10px] font-bold text-[var(--color-slate-muted)] uppercase tracking-wider mb-1">Clusters</div>
+            <div className="text-[20px] font-black text-[var(--color-navy-deep)] leading-none">{result.metrics.numClusters}</div>
+          </div>
+          <div className="bg-[var(--color-background)] border border-[var(--color-border)] rounded-[var(--radius-control)] p-3" title={silhouetteVal == null ? "Requires >1 valid cluster to compute." : undefined}>
+            <div className="text-[10px] font-bold text-[var(--color-slate-muted)] uppercase tracking-wider mb-1">Silhouette</div>
+            <div className="text-[20px] font-black text-[var(--color-navy-deep)] leading-none">{silhouetteVal != null ? silhouetteVal.toFixed(3) : 'N/A'}</div>
+          </div>
+        </div>
+
       <div className="mb-2">
-        <h4 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">Cluster Distribution</h4>
+        <h4 className="text-[11px] font-bold text-[var(--color-slate-muted)] mb-3 uppercase tracking-widest">Cluster Distribution</h4>
         <div className="h-40 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -67,17 +71,17 @@ export default function MetricsPanel({ result, algorithm }: MetricsPanelProps) {
       </div>
 
       {result.hotspot_rankings && result.hotspot_rankings.length > 0 && (
-        <div className="mb-2 max-h-48 overflow-y-auto">
-          <h4 className="text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">Top Hotspots by Intensity</h4>
+        <div className="mb-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+          <h4 className="text-[11px] font-bold text-[var(--color-slate-muted)] mb-3 uppercase tracking-widest mt-4">Top Hotspots by Intensity</h4>
           <div className="space-y-2">
             {result.hotspot_rankings.slice(0, 5).map((ranking, idx) => (
-              <div key={ranking.cluster_id} className="bg-slate-50 rounded-lg p-2 border border-slate-100 flex items-center justify-between">
+              <div key={ranking.cluster_id} className="bg-[var(--color-background)] rounded-[var(--radius-control)] p-3 border border-[var(--color-border)] flex items-center justify-between">
                  <div>
-                    <div className="text-[10px] font-bold text-slate-700">Cluster {ranking.cluster_id}</div>
-                    <div className="text-xs text-slate-500">Vol: {ranking.volume} | Area: {ranking.area_sq_km} km²</div>
+                    <div className="text-[12px] font-bold text-[var(--color-navy-deep)] mb-0.5">Cluster {ranking.cluster_id}</div>
+                    <div className="text-[11px] font-medium text-[var(--color-slate-muted)]">Vol: {ranking.volume} | Area: {ranking.area_sq_km} km²</div>
                  </div>
-                 <div className={`text-xs font-bold px-2 py-1 rounded ${
-                    ranking.risk_category === 'Critical Hotspot' ? 'bg-rose-100 text-rose-700' :
+                 <div className={`text-[11px] font-bold px-2 py-1.5 rounded-[var(--radius-control)] uppercase tracking-wider ${
+                    ranking.risk_category === 'Critical Hotspot' ? 'bg-[var(--color-rose)]/10 text-[var(--color-rose)]' :
                     ranking.risk_category === 'High Risk' ? 'bg-orange-100 text-orange-700' :
                     'bg-yellow-100 text-yellow-700'
                  }`}>
@@ -89,18 +93,19 @@ export default function MetricsPanel({ result, algorithm }: MetricsPanelProps) {
         </div>
       )}
       
-      <div className="mt-4 p-3 bg-blue-50 text-blue-800 rounded-lg text-xs leading-relaxed border border-blue-100">
-        <strong className="block mb-1 font-semibold">Evaluation:</strong>
-        {silhouetteVal !== null ? (
-          <span>
-            Silhouette score of {silhouetteVal.toFixed(2)} indicates 
-            {silhouetteVal > 0.5 ? ' strong ' : silhouetteVal > 0.25 ? ' fair ' : ' weak '}
-            spatial structure. 
-          </span>
-        ) : (
-          <span>Insufficient distinct clusters to calculate spatial metrics. </span>
-        )}
-        The algorithm identified {result.metrics.numClusters} dense regions.
+        <div className="mt-5 p-4 bg-[var(--color-primary)]/5 text-[var(--color-primary)] rounded-[var(--radius-control)] text-[12px] font-medium leading-relaxed border border-[var(--color-primary)]/10">
+          <strong className="block mb-1 font-semibold">Evaluation:</strong>
+          {silhouetteVal != null ? (
+            <span>
+              Silhouette score of {silhouetteVal.toFixed(2)} indicates 
+              {silhouetteVal > 0.5 ? ' strong ' : silhouetteVal > 0.25 ? ' fair ' : ' weak '}
+              spatial structure. 
+            </span>
+          ) : (
+            <span>Insufficient distinct clusters to calculate spatial metrics. </span>
+          )}
+          The algorithm identified {result.metrics.numClusters} dense regions.
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,40 @@
 @import "tailwindcss";
 @import "maplibre-gl/dist/maplibre-gl.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+
+@theme {
+  --color-navy: #17243A;
+  --color-navy-deep: #0F172A;
+
+  --color-slate: #475569;
+  --color-slate-muted: #64748B;
+
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F1F5F9;
+
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+
+  --color-primary: #2563EB;
+  --color-indigo: #4F46E5;
+  --color-blue-soft: #EFF6FF;
+  --color-indigo-soft: #EEF2FF;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-critical: #B91C1C;
+
+  --radius-control: 8px;
+  --radius-card: 10px;
+  --radius-panel: 12px;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
 html, body, #root {
   height: 100%;
@@ -7,6 +42,9 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-slate);
 }
 
 .map-container {
@@ -39,3 +77,10 @@ html, body, #root {
   border-left-color: rgba(255, 255, 255, 0.85) !important;
 }
 
+/* Custom Scrollbar for sidebars and panels */
+.custom-scrollbar {
+  scrollbar-width: none; /* Firefox */
+}
+.custom-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}

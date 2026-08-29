@@ -46,20 +46,20 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
       }
     }
     fetchEda();
-  }, [selectedDatasetKeys, selectedTypes, selectedDistricts]);
+  }, [selectedDatasetKeys, selectedTypes, selectedDistricts, selectedArrest]);
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50">
-        <div className="text-slate-500 font-medium animate-pulse">Computing Exploratory Data Analysis...</div>
+      <div className="flex-1 flex items-center justify-center bg-[var(--color-background)]">
+        <div className="text-[var(--color-slate)] font-semibold animate-pulse tracking-wide text-sm uppercase">Computing Exploratory Data Analysis...</div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50">
-        <div className="text-rose-500 font-medium">EDA unavailable: {error}</div>
+      <div className="flex-1 flex items-center justify-center bg-[var(--color-background)]">
+        <div className="text-[var(--color-rose)] font-semibold text-sm">EDA unavailable: {error}</div>
       </div>
     );
   }
@@ -75,62 +75,62 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
     .map(([name, count]) => ({ name, count }));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 p-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
         <header className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900">Exploratory Data Analysis</h2>
-          <p className="text-slate-500">Distribution, categorical trends, and data quality metrics for the current filtered selection.</p>
+          <h2 className="text-[24px] font-bold text-[var(--color-navy-deep)] tracking-tight">Exploratory Data Analysis</h2>
+          <p className="text-[14px] text-[var(--color-slate-muted)] mt-1">Distribution, categorical trends, and data quality metrics for the current filtered selection.</p>
         </header>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-[var(--color-primary)]/10 rounded-[var(--radius-control)] text-[var(--color-primary)]">
                 <FileText className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-slate-700">Total Incidents</h3>
+              <h3 className="text-[12px] font-bold text-[var(--color-slate)] uppercase tracking-wider">Total Incidents</h3>
             </div>
-            <p className="text-3xl font-bold text-slate-900">{data.summary.total_incidents.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-1">Filtered valid records</p>
+            <p className="text-[28px] font-black text-[var(--color-navy-deep)] leading-none">{data.summary.total_incidents.toLocaleString()}</p>
+            <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Filtered valid records</p>
           </div>
           
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
+          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-[var(--color-rose)]/10 rounded-[var(--radius-control)] text-[var(--color-rose)]">
                 <AlertTriangle className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-slate-700">Dominant Crime</h3>
+              <h3 className="text-[12px] font-bold text-[var(--color-slate)] uppercase tracking-wider">Dominant Crime</h3>
             </div>
-            <p className="text-xl font-bold text-slate-900 truncate" title={data.summary.top_crime}>{data.summary.top_crime}</p>
-            <p className="text-xs text-slate-500 mt-1">Most frequent category</p>
+            <p className="text-[20px] font-bold text-[var(--color-navy-deep)] truncate leading-none" title={data.summary.top_crime}>{data.summary.top_crime}</p>
+            <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Most frequent category</p>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-[var(--color-indigo)]/10 rounded-[var(--radius-control)] text-[var(--color-indigo)]">
                 <Clock className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-slate-700">Peak Hour</h3>
+              <h3 className="text-[12px] font-bold text-[var(--color-slate)] uppercase tracking-wider">Peak Hour</h3>
             </div>
-            <p className="text-2xl font-bold text-slate-900">
+            <p className="text-[28px] font-black text-[var(--color-navy-deep)] leading-none">
               {String(data.summary.peak_hour).padStart(2, '0')}:00
             </p>
-            <p className="text-xs text-slate-500 mt-1">Highest frequency window</p>
+            <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Highest frequency window</p>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-[var(--color-teal)]/10 rounded-[var(--radius-control)] text-[var(--color-teal)]">
                 <MapIcon className="w-5 h-5" />
               </div>
-              <h3 className="font-semibold text-slate-700">Data Quality</h3>
+              <h3 className="text-[12px] font-bold text-[var(--color-slate)] uppercase tracking-wider">Data Quality</h3>
             </div>
-            <p className="text-xl font-bold text-slate-900">
+            <p className="text-[24px] font-black text-[var(--color-navy-deep)] leading-none">
               {(((data.summary.total_source_rows - data.summary.dropped_rows) / data.summary.total_source_rows) * 100).toFixed(1)}% Valid
             </p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">
               {data.summary.dropped_rows.toLocaleString()} dropped due to invalid geocoding
             </p>
           </div>
@@ -138,29 +138,29 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Crime Types Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-1">Top Crime Categories</h3>
-            <p className="text-sm text-slate-500 mb-6">Distribution of incidents by primary type (Top 10)</p>
+          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)]">
+            <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Top Crime Categories</h3>
+            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-6">Distribution of incidents by primary type (Top 10)</p>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={crimeTypeData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-                  <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 11}} width={120} />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--color-border)" />
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: 'var(--color-slate-muted)', fontSize: 11, fontWeight: 500}} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: 'var(--color-slate)', fontSize: 11, fontWeight: 600}} width={120} />
                   <Tooltip 
-                    cursor={{fill: '#f1f5f9'}}
-                    contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    cursor={{fill: 'var(--color-background)'}}
+                    contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)'}}
                   />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* District Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-1">Geographic Distribution</h3>
-            <p className="text-sm text-slate-500 mb-6">Incident concentration by district or area</p>
+          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)]">
+            <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Geographic Distribution</h3>
+            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-6">Incident concentration by district or area</p>
             <div className="h-80 flex items-center justify-center relative">
               {districtData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -182,12 +182,12 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                      contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)'}}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="text-slate-400">District data unavailable for this dataset</div>
+                <div className="text-[var(--color-slate-muted)] font-medium text-sm">District data unavailable for this dataset</div>
               )}
             </div>
           </div>

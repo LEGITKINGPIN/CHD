@@ -202,14 +202,17 @@ export default function App() {
 
   if (loading && datasets.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50 text-slate-800">
-        <div className="text-xl font-medium">Initializing Crime Data Pipeline...</div>
+      <div className="flex items-center justify-center h-screen bg-[var(--color-surface)]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin"></div>
+          <div className="text-[14px] font-bold tracking-widest uppercase text-[var(--color-slate)]">Initializing Spatial Intelligence...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-slate-50">
+    <div className="flex flex-col h-screen overflow-hidden bg-[var(--color-background)]">
       <Header activeView={activeView} setActiveView={setActiveView} />
       
       {activeView === 'map' ? (
@@ -246,11 +249,12 @@ export default function App() {
             setCustomMarker={setCustomMarker}
             onNavigateCompare={() => setActiveView('compare')}
             focusCoordinate={focusCoordinate}
-          />
+          >
             {clusteringResult && (
               <MetricsPanel result={clusteringResult} algorithm={selectedAlgorithm} />
             )}
-          </main>
+          </MapWorkspace>
+        </main>
         </div>
       ) : activeView === 'trends' ? (
         <MacroDashboard 
