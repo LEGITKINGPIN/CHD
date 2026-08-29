@@ -104,26 +104,33 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
       const feature = e.features[0];
       const layerId = feature.layer.id;
 
-      if (layerId === 'crime-clusters') {
+      if (layerId === 'crime-clusters' || layerId === 'cluster-count') {
         const clusterId = feature.id ?? feature.properties.cluster_id;
         const map = mapRef.current.getMap();
         const source = map.getSource('crimes-clusters');
 
-        source.getClusterExpansionZoom(
-          clusterId,
-          (err: any, zoom: number) => {
-            if (err) return;
-            map.easeTo({
-              center: feature.geometry.coordinates,
-              zoom,
-              duration: 500
-            });
-          }
-        );
+        if (source && clusterId !== undefined) {
+          source.getClusterExpansionZoom(
+            clusterId,
+            (err: any, zoom: number) => {
+              if (err) {
+                map.easeTo({ center: feature.geometry.coordinates, zoom: map.getZoom() + 2, duration: 500 });
+                return;
+              }
+              map.easeTo({
+                center: feature.geometry.coordinates,
+                zoom,
+                duration: 500
+              });
+            }
+          );
+        } else {
+          map.easeTo({ center: feature.geometry.coordinates, zoom: map.getZoom() + 2, duration: 500 });
+        }
         return;
       }
 
-      const type = layerId.includes('cluster') && layerId !== 'crime-clusters' ? 'cluster' : 'crime';
+      const type = layerId.includes('cluster') && layerId !== 'crime-clusters' && layerId !== 'cluster-count' ? 'cluster' : 'crime';
       
       if (type === 'crime' || (type === 'cluster' && feature.properties.clusterId === -1)) {
         // Noise points in clustering also have the original crime properties attached
@@ -174,7 +181,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
       const feature = e.features[0];
       const layerId = feature.layer.id;
       
-      if (layerId === 'crime-clusters') {
+      if (layerId === 'crime-clusters' || layerId === 'cluster-count') {
         let lng = feature.geometry.coordinates[0];
         let lat = feature.geometry.coordinates[1];
         setHoverInfo((prev) => {
@@ -184,7 +191,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         return;
       }
 
-      const type = layerId.includes('cluster') && layerId !== 'crime-clusters' ? 'cluster' : 'crime';
+      const type = layerId.includes('cluster') && layerId !== 'crime-clusters' && layerId !== 'cluster-count' ? 'cluster' : 'crime';
       
       let lng = e.lngLat.lng;
       let lat = e.lngLat.lat;
@@ -525,7 +532,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         initialViewState={initialViewState}
         mapStyle={currentStyle}
         minZoom={3}
-        interactiveLayerIds={['crime-points', 'crime-clusters', 'clustered-points-circle', 'cluster-hulls-fill']}
+        interactiveLayerIds={['crime-points', 'crime-clusters', 'cluster-count', 'clustered-points-circle', 'cluster-hulls-fill']}
         onMouseMove={onInteractiveHover}
         onClick={onMapClick}
         onMouseLeave={() => setHoverInfo(null)}
