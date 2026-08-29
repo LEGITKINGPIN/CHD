@@ -200,8 +200,6 @@ def run_clustering(
         density = volume / area_km2
         intensity_score = volume * np.log1p(density)
         
-        risk_category = "Critical Hotspot" if density > 500 else ("High Risk" if density > 200 else "Moderate Risk")
-        
         dominant_crime = "Unknown"
         peak_hour = "Unknown"
         peak_day = "Unknown"
@@ -239,7 +237,6 @@ def run_clustering(
             "area_sq_km": float(round(area_km2, 3)),
             "density_per_km2": float(round(density, 1)),
             "intensity_score": float(round(intensity_score, 2)),
-            "risk_category": risk_category,
             "dominant_crime": dominant_crime,
             "peak_hour": peak_hour,
             "peak_day": peak_day,
@@ -247,5 +244,17 @@ def run_clustering(
         })
         
     hotspot_rankings = sorted(hotspot_rankings, key=lambda x: x["intensity_score"], reverse=True)
+    
+    # Assign relative risk categories based on percentile ranking for dynamic hierarchy
+    for i, hr in enumerate(hotspot_rankings):
+        percentile = 1.0 - (i / max(1, len(hotspot_rankings)))
+        if percentile > 0.80:
+            hr["risk_category"] = "Critical Risk"
+        elif percentile > 0.50:
+            hr["risk_category"] = "High Risk"
+        elif percentile > 0.20:
+            hr["risk_category"] = "Moderate Risk"
+        else:
+            hr["risk_category"] = "Low Risk"
 
     return labels, centroids, metrics, hotspot_rankings

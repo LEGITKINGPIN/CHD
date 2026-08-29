@@ -24,6 +24,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
   const [localClusters, setLocalClusters] = useState<any>(null);
   const [localAlgorithm, setLocalAlgorithm] = useState<'K-MEANS' | 'DBSCAN' | 'HIERARCHICAL'>('K-MEANS');
   const [hoveredClusterId, setHoveredClusterId] = useState<number | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const mapRef = useRef<any>(null);
 
   const localClusteringResult = useMemo(() => {
@@ -169,12 +170,17 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
   }, [metadata]);
 
   useEffect(() => {
-    if (focusCoordinate && mapRef.current) {
+    if (focusCoordinate && mapRef.current && isMapLoaded) {
       const map = mapRef.current.getMap();
       map.flyTo({ center: focusCoordinate, zoom: 15, duration: 1500 });
       setSearchQuery(`${focusCoordinate[1].toFixed(4)}, ${focusCoordinate[0].toFixed(4)}`);
+      setCustomMarker({
+        lng: focusCoordinate[0],
+        lat: focusCoordinate[1],
+        radiusKm: customMarker ? customMarker.radiusKm : 1.0
+      });
     }
-  }, [focusCoordinate]);
+  }, [focusCoordinate, isMapLoaded]);
 
   const onInteractiveHover = (e: any) => {
     if (e.features && e.features.length > 0) {
@@ -536,6 +542,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         onMouseMove={onInteractiveHover}
         onClick={onMapClick}
         onMouseLeave={() => setHoverInfo(null)}
+        onLoad={() => setIsMapLoaded(true)}
       >
         {/* Source for Maplibre clustering (when ML clustering isn't active) */}
         <Source 

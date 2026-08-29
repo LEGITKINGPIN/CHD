@@ -47,6 +47,7 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
           {hotspots.map((hotspot, index) => {
             const isCritical = hotspot.risk_category.toLowerCase().includes('critical');
             const isHigh = hotspot.risk_category.toLowerCase().includes('high');
+            const isModerate = hotspot.risk_category.toLowerCase().includes('moderate');
             const centroid = clusteringResult.centroids[hotspot.cluster_id];
             
             return (
@@ -54,12 +55,18 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
                 {/* Header */}
                 <div className={clsx(
                   "px-6 py-4 border-b flex justify-between items-center",
-                  isCritical ? "bg-[var(--color-rose)]/5 border-[var(--color-rose)]/10" : isHigh ? "bg-orange-50 border-orange-100" : "bg-[var(--color-surface-soft)] border-[var(--color-border)]"
+                  isCritical ? "bg-[var(--color-rose)]/5 border-[var(--color-rose)]/10" : 
+                  isHigh ? "bg-orange-50 border-orange-100" : 
+                  isModerate ? "bg-amber-50 border-amber-100" :
+                  "bg-[var(--color-surface-soft)] border-[var(--color-border)]"
                 )}>
                   <div className="flex items-center gap-3">
                     <span className={clsx(
                       "flex items-center justify-center w-7 h-7 rounded-full text-[13px] font-bold text-white",
-                      isCritical ? "bg-[var(--color-rose)]" : isHigh ? "bg-orange-500" : "bg-[var(--color-slate)]"
+                      isCritical ? "bg-[var(--color-rose)]" : 
+                      isHigh ? "bg-orange-500" : 
+                      isModerate ? "bg-amber-500" :
+                      "bg-[var(--color-slate)]"
                     )}>
                       {index + 1}
                     </span>
@@ -69,6 +76,7 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
                     "px-2.5 py-1 text-[11px] font-bold rounded-[var(--radius-control)] border uppercase tracking-wider",
                     isCritical ? "bg-[var(--color-rose)]/10 text-[var(--color-rose)] border-[var(--color-rose)]/20" : 
                     isHigh ? "bg-orange-100 text-orange-700 border-orange-200" : 
+                    isModerate ? "bg-amber-100 text-amber-700 border-amber-200" :
                     "bg-[var(--color-slate)]/10 text-[var(--color-slate)] border-[var(--color-border)]"
                   )}>
                     {hotspot.risk_category.toUpperCase()}
