@@ -14,6 +14,8 @@ import EdaDashboard from './components/EdaDashboard';
 import CompareAlgorithms from './components/CompareAlgorithms';
 import PatrolIntelligence from './components/PatrolIntelligence';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 export default function App() {
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
   const [selectedDatasetKeys, setSelectedDatasetKeys] = useState<string[]>(['delhi']);
@@ -47,7 +49,7 @@ export default function App() {
   useEffect(() => {
     async function initApp() {
       try {
-        const res = await fetch('/api/datasets');
+        const res = await fetch(`${API_BASE_URL}/datasets`);
         const dsets: DatasetInfo[] = await res.json();
         setDatasets(dsets);
         if (dsets.length > 0) {
@@ -66,8 +68,8 @@ export default function App() {
     try {
       const keysStr = datasetKeys.join(',');
       const [crimeRes, metaRes] = await Promise.all([
-        fetch(`/api/crimes?dataset=${keysStr}`),
-        fetch(`/api/metadata?dataset=${keysStr}`)
+        fetch(`${API_BASE_URL}/crimes?dataset=${keysStr}`),
+        fetch(`${API_BASE_URL}/metadata?dataset=${keysStr}`)
       ]);
       const crimeData = await crimeRes.json();
       const metaData = await metaRes.json();
@@ -95,7 +97,7 @@ export default function App() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/upload", {
+      const res = await fetch(`${API_BASE_URL}/upload`, {
         method: "POST",
         body: formData,
       });
@@ -120,11 +122,11 @@ export default function App() {
   const handleLiveFetch = async (url: string, limit: number) => {
     setLoading(true);
     try {
-      const formData = new URLSearchParams();
+      const formData = new FormData();
       formData.append("url", url);
       formData.append("limit", limit.toString());
       
-      const res = await fetch("/api/fetch-live", {
+      const res = await fetch(`${API_BASE_URL}/fetch-live`, {
         method: "POST",
         body: formData,
       });
@@ -173,7 +175,7 @@ export default function App() {
     if (filteredCrimes.length === 0) return;
     setIsClustering(true);
     try {
-      const res = await fetch('/api/clusters', {
+      const res = await fetch(`${API_BASE_URL}/clusters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
