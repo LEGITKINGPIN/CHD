@@ -9,19 +9,19 @@ interface HeaderProps {
 
 export default function Header({ activeView, setActiveView }: HeaderProps) {
   return (
-    <header className="h-[60px] bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center px-6 shrink-0 shadow-sm z-20">
-      <div className="flex items-center gap-3">
+    <header className="h-[60px] bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center px-3 md:px-6 shrink-0 shadow-sm z-20 gap-2 md:gap-4">
+      <div className="flex items-center gap-2 md:gap-3 shrink-0">
         <div className="flex items-center justify-center bg-clip-text text-transparent bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-indigo)]">
-          <span className="font-black text-2xl tracking-tighter" style={{ letterSpacing: '-0.05em' }}>CHD</span>
+          <span className="font-black text-xl md:text-2xl tracking-tighter" style={{ letterSpacing: '-0.05em' }}>CHD</span>
         </div>
-        <div className="pl-3 border-l-2 border-[var(--color-border)]">
-          <h1 className="text-[14px] font-black text-[var(--color-navy-deep)] leading-tight tracking-tight uppercase">Crime Hotspot Detection</h1>
-          <p className="text-[9px] text-[var(--color-primary)] font-bold tracking-widest uppercase">Crime & Risk Intelligence</p>
+        <div className="pl-2 md:pl-3 border-l-2 border-[var(--color-border)]">
+          <h1 className="text-[12px] md:text-[14px] font-black text-[var(--color-navy-deep)] leading-tight tracking-tight uppercase">Crime Hotspot Detection</h1>
+          <p className="hidden md:block text-[9px] text-[var(--color-primary)] font-bold tracking-widest uppercase">Crime & Risk Intelligence</p>
         </div>
       </div>
       
-      <div className="flex-1 flex justify-center">
-        <div className="bg-[var(--color-surface-soft)] p-[3px] rounded-[var(--radius-control)] flex items-center gap-1 border border-[var(--color-border)]">
+      <div className="flex-1 flex md:justify-center overflow-x-auto custom-scrollbar mx-1 md:mx-2 min-w-0">
+        <div className="bg-[var(--color-surface-soft)] p-[3px] rounded-[var(--radius-control)] flex items-center gap-1 border border-[var(--color-border)] whitespace-nowrap w-max">
           {[
             { id: 'map', label: 'Map', icon: MapIcon },
             { id: 'eda', label: 'EDA', icon: BarChart3 },
@@ -49,10 +49,10 @@ export default function Header({ activeView, setActiveView }: HeaderProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-[var(--color-success)] text-[11px] font-semibold rounded-full border border-emerald-100">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] shadow-[0_0_4px_rgba(16,185,129,0.5)]"></span>
-          SYSTEM HEALTH: OPTIMAL
+      <div className="flex items-center shrink-0">
+        <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 bg-emerald-50 text-[var(--color-success)] text-[11px] font-semibold rounded-full border border-emerald-100" title="SYSTEM HEALTH: OPTIMAL">
+          <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-[var(--color-success)] shadow-[0_0_4px_rgba(16,185,129,0.5)]"></span>
+          <span className="hidden md:inline">SYSTEM HEALTH: OPTIMAL</span>
         </div>
       </div>
     </header>

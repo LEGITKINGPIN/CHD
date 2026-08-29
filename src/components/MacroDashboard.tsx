@@ -90,8 +90,8 @@ export default function MacroDashboard({ selectedDatasetKeys, selectedTypes = ['
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
         
         <header className="mb-8 flex justify-between items-end">
           <div>
@@ -103,10 +103,10 @@ export default function MacroDashboard({ selectedDatasetKeys, selectedTypes = ['
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Hourly Trend Chart */}
-          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] lg:col-span-2">
+          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] lg:col-span-2 overflow-hidden">
             <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Hourly Crime Volume</h3>
             <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4">Crimes occurring throughout the 24-hour day cycle.</p>
-            <div className="h-72">
+            <div className="h-64 md:h-72 w-full overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.hourly} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
@@ -122,10 +122,10 @@ export default function MacroDashboard({ selectedDatasetKeys, selectedTypes = ['
           </div>
 
           {/* Weekly Composition Chart */}
-          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)]">
+          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
             <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Day of Week Distribution</h3>
             <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4">Relative frequency across week days.</p>
-            <div className="h-64 flex items-center justify-center relative">
+            <div className="h-56 md:h-64 flex items-center justify-center relative w-full overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -151,10 +151,10 @@ export default function MacroDashboard({ selectedDatasetKeys, selectedTypes = ['
           </div>
 
           {/* Monthly Trend Chart */}
-          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)]">
+          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
             <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Monthly Crime Volume</h3>
             <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4">Long-term seasonal volume over months.</p>
-            <div className="h-64">
+            <div className="h-56 md:h-64 w-full overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.monthly} margin={{ top: 5, right: 0, left: -20, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />

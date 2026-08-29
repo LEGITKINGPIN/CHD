@@ -59,10 +59,10 @@ export default function CompareAlgorithms({
   }, [selectedDatasetKeys, selectedTypes, selectedDistricts, selectedArrest, customMarker]);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
         
-        <header className="mb-8 flex justify-between items-end">
+        <header className="mb-4 md:mb-8 flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4">
           <div>
             <h2 className="text-[24px] font-bold text-[var(--color-navy-deep)] flex items-center gap-3 tracking-tight">
               Algorithm Comparison
@@ -77,7 +77,7 @@ export default function CompareAlgorithms({
           <button
             onClick={runComparison}
             disabled={loading || selectedDatasetKeys.length === 0}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 disabled:opacity-50 text-[var(--color-surface)] text-[13px] font-semibold rounded-[var(--radius-control)] transition-colors shadow-sm"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 disabled:opacity-50 text-[var(--color-surface)] text-[13px] font-semibold rounded-[var(--radius-control)] transition-colors shadow-sm min-h-[44px]"
           >
             {loading ? (
               <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> Computing...</span>
@@ -102,9 +102,9 @@ export default function CompareAlgorithms({
         ) : null}
 
         {results.length > 0 ? (
-          <div className="space-y-6">
-            <div className="bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
-              <table className="w-full text-left">
+          <div className="space-y-4 md:space-y-6">
+            <div className="bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-x-auto custom-scrollbar w-full">
+              <table className="w-full text-left min-w-[700px]">
                 <thead className="bg-[var(--color-background)] border-b border-[var(--color-border)] text-[var(--color-slate-muted)] text-[11px] font-bold uppercase tracking-widest">
                   <tr>
                     <th className="px-6 py-4">Algorithm</th>
@@ -166,8 +166,8 @@ export default function CompareAlgorithms({
               </table>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
                 <h3 className="font-bold text-[14px] text-[var(--color-navy-deep)] mb-3 flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-[var(--color-primary)]"/> How to interpret these metrics?
                 </h3>
@@ -177,7 +177,7 @@ export default function CompareAlgorithms({
                   <li><strong>N/A Values:</strong> Geometric metrics are mathematically undefined for algorithms that produce only a single cluster or consider all points as noise.</li>
                 </ul>
               </div>
-              <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+              <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
                 <h3 className="font-bold text-[14px] text-[var(--color-navy-deep)] mb-3 flex items-center gap-2">
                   <Database className="w-4 h-4 text-[var(--color-teal)]"/> Scientific Integrity
                 </h3>

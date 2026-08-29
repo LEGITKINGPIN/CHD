@@ -23,6 +23,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
   const [selectedCrime, setSelectedCrime] = useState<any>(null);
   const [localClusters, setLocalClusters] = useState<any>(null);
   const [localAlgorithm, setLocalAlgorithm] = useState<'K-MEANS' | 'DBSCAN' | 'HIERARCHICAL'>('K-MEANS');
+  const [hoveredClusterId, setHoveredClusterId] = useState<number | null>(null);
   const mapRef = useRef<any>(null);
 
   const localClusteringResult = useMemo(() => {
@@ -84,9 +85,9 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
   }, [localClusters]);
 
   const MAP_STYLES = [
+    { id: 'voyager', name: 'Voyager Map', url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json' },
     { id: 'light', name: 'Light Map', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
-    { id: 'dark', name: 'Dark Map', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
-    { id: 'voyager', name: 'Voyager Map', url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json' }
+    { id: 'dark', name: 'Dark Map', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' }
   ];
   const [currentStyle, setCurrentStyle] = useState(MAP_STYLES[0].url);
   const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
@@ -462,7 +463,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
     <div className="w-full h-full relative" style={{ width: '100%', height: '100%' }}>
       
       {/* Top Left Controls: Search Bar */}
-      <div className="absolute top-4 z-10 w-80 transition-[left] duration-300 ease-in-out" style={{ left: 'calc(var(--sidebar-offset, 0px) + 16px)' }}>
+      <div className="absolute top-4 z-10 w-[calc(100vw-72px)] md:w-80 transition-[left] duration-300 ease-in-out max-md:left-14 md:!left-[calc(var(--sidebar-offset,0px)+16px)]">
         <form onSubmit={handleSearch} className="flex bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
           <input 
             type="text" 
@@ -486,7 +487,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
       </div>
 
       {/* Bottom Left Controls: Map Layers */}
-      <div className="absolute bottom-4 z-10 transition-[left] duration-300 ease-in-out" style={{ left: 'calc(var(--sidebar-offset, 0px) + 16px)' }}>
+      <div className="absolute bottom-4 z-10 transition-[left] duration-300 ease-in-out max-md:left-4 md:!left-[calc(var(--sidebar-offset,0px)+16px)]">
         <div className="relative">
           <button 
             onClick={() => setIsLayerMenuOpen(!isLayerMenuOpen)}
@@ -626,7 +627,9 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
               type="fill"
               paint={{
                 'fill-color': '#3b82f6',
-                'fill-opacity': 0.15
+                'fill-opacity': hoveredClusterId !== null
+                  ? ['case', ['==', ['get', 'clusterId'], hoveredClusterId], 0.3, 0.15]
+                  : 0.15
               }}
             />
             <Layer
@@ -634,8 +637,12 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
               type="line"
               paint={{
                 'line-color': '#2563eb',
-                'line-width': 2,
-                'line-opacity': 0.8,
+                'line-width': hoveredClusterId !== null 
+                  ? ['case', ['==', ['get', 'clusterId'], hoveredClusterId], 3, 1] 
+                  : 2,
+                'line-opacity': hoveredClusterId !== null
+                  ? ['case', ['==', ['get', 'clusterId'], hoveredClusterId], 1, 0.3]
+                  : 0.8,
                 'line-dasharray': [2, 2]
               }}
             />
@@ -661,7 +668,12 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
                     '#8b5cf6'
                   ]
                 ],
-                'circle-opacity': ['case', ['==', ['get', 'cluster'], -1], 0.4, 0.9],
+                'circle-opacity': hoveredClusterId !== null
+                  ? ['case', 
+                      ['==', ['get', 'cluster'], hoveredClusterId], 1,
+                      0.3
+                    ]
+                  : ['case', ['==', ['get', 'cluster'], -1], 0.4, 0.9],
                 'circle-stroke-width': 1,
                 'circle-stroke-color': '#ffffff'
               }}
@@ -679,7 +691,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
             anchor="bottom"
             offset={15}
           >
-            <div className="p-3 text-[12px] max-w-[220px] shadow-sm rounded-[var(--radius-panel)] bg-[var(--color-surface)] text-[var(--color-navy-deep)] border border-[var(--color-border)]">
+            <div className="p-3 text-[12px] max-w-[calc(100vw-40px)] md:max-w-[220px] shadow-sm rounded-[var(--radius-panel)] bg-[var(--color-surface)] text-[var(--color-navy-deep)] border border-[var(--color-border)] overflow-hidden">
               {hoverInfo.type === 'native-cluster' ? (
                 <>
                   <div className="font-bold text-[13px] border-b pb-1.5 mb-1.5 border-[var(--color-border)]">
@@ -699,7 +711,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
               ) : (
                 <>
                   <div className="font-bold text-[13px] border-b pb-1.5 mb-1.5 border-[var(--color-border)]">
-                    {hoverInfo.props.clusterId === -1 ? 'Noise Point' : `Cluster ${hoverInfo.props.clusterId}`}
+                    {(hoverInfo.props.clusterId ?? hoverInfo.props.cluster) === -1 ? 'Noise Point' : `Cluster ${hoverInfo.props.clusterId ?? hoverInfo.props.cluster}`}
                   </div>
                   {hoverInfo.props.count && <div className="text-[var(--color-slate)]">Total Crimes: <span className="font-semibold text-[var(--color-navy-deep)]">{hoverInfo.props.count}</span></div>}
                   {hoverInfo.props.primary_type && (
@@ -744,7 +756,9 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
               type="fill"
               paint={{
                 'fill-color': '#eab308',
-                'fill-opacity': 0.3
+                'fill-opacity': hoveredClusterId !== null
+                  ? ['case', ['==', ['get', 'clusterId'], `local-${hoveredClusterId}`], 0.5, 0.1]
+                  : 0.3
               }}
             />
             <Layer
@@ -752,7 +766,12 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
               type="line"
               paint={{
                 'line-color': '#ca8a04',
-                'line-width': 2,
+                'line-width': hoveredClusterId !== null
+                  ? ['case', ['==', ['get', 'clusterId'], `local-${hoveredClusterId}`], 3, 1]
+                  : 2,
+                'line-opacity': hoveredClusterId !== null
+                  ? ['case', ['==', ['get', 'clusterId'], `local-${hoveredClusterId}`], 1, 0.3]
+                  : 1,
                 'line-dasharray': [2, 2]
               }}
             />
@@ -772,7 +791,9 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
                   '#14b8a6', 2, 
                   '#ec4899'
                 ],
-                'circle-opacity': 0.9,
+                'circle-opacity': hoveredClusterId !== null
+                  ? ['case', ['==', ['get', 'cluster'], hoveredClusterId], 1, 0.3]
+                  : 0.9,
                 'circle-stroke-width': 1,
                 'circle-stroke-color': '#ffffff'
               }}
@@ -805,14 +826,14 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata, custo
         {/* Top: Metrics Panel (Children / Global) */}
         {children && !localClusteringResult && (
           <div className="pointer-events-auto flex-1 min-h-0 flex flex-col w-full">
-            {children}
+            {React.isValidElement(children) ? React.cloneElement(children as any, { onClusterHover: setHoveredClusterId, hoveredClusterId }) : children}
           </div>
         )}
 
         {/* Local Metrics Panel */}
         {localClusteringResult && (
           <div className="pointer-events-auto flex-1 min-h-0 flex flex-col w-full">
-            <MetricsPanel result={localClusteringResult} algorithm={`Local ${localAlgorithm}`} />
+            <MetricsPanel result={localClusteringResult} algorithm={`Local ${localAlgorithm}`} onClusterHover={setHoveredClusterId} hoveredClusterId={hoveredClusterId} />
           </div>
         )}
 

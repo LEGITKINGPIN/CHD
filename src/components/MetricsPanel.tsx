@@ -6,9 +6,11 @@ import { BarChart, Bar, XAxis, YAxis } from 'recharts';
 interface MetricsPanelProps {
   result: ClusteringResult;
   algorithm: string;
+  onClusterHover?: (clusterId: number | null) => void;
+  hoveredClusterId?: number | null;
 }
 
-export default function MetricsPanel({ result, algorithm }: MetricsPanelProps) {
+export default function MetricsPanel({ result, algorithm, onClusterHover, hoveredClusterId }: MetricsPanelProps) {
   const silhouetteVal = result.metrics.silhouette;
   // Aggregate clusters sizes
   const clusterCounts = new Map<number, number>();
@@ -62,7 +64,17 @@ export default function MetricsPanel({ result, algorithm }: MetricsPanelProps) {
               />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                 {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.label === -1 ? '#cbd5e1' : COLORS[entry.label % 5]} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.label === -1 ? '#cbd5e1' : COLORS[entry.label % 5]} 
+                    onMouseEnter={() => onClusterHover && onClusterHover(entry.label)}
+                    onMouseLeave={() => onClusterHover && onClusterHover(null)}
+                    style={{ 
+                      opacity: hoveredClusterId !== undefined && hoveredClusterId !== null && hoveredClusterId !== entry.label ? 0.3 : 1,
+                      transition: 'opacity 0.2s',
+                      cursor: 'pointer'
+                    }}
+                  />
                 ))}
               </Bar>
             </BarChart>
@@ -75,7 +87,12 @@ export default function MetricsPanel({ result, algorithm }: MetricsPanelProps) {
           <h4 className="text-[11px] font-bold text-[var(--color-slate-muted)] mb-3 uppercase tracking-widest mt-4">Top Hotspots by Intensity</h4>
           <div className="space-y-2">
             {result.hotspot_rankings.slice(0, 5).map((ranking, idx) => (
-              <div key={ranking.cluster_id} className="bg-[var(--color-background)] rounded-[var(--radius-control)] p-3 border border-[var(--color-border)] flex items-center justify-between">
+              <div 
+                key={ranking.cluster_id} 
+                className={`bg-[var(--color-background)] rounded-[var(--radius-control)] p-3 border flex items-center justify-between transition-all cursor-pointer ${hoveredClusterId === ranking.cluster_id ? 'border-[var(--color-primary)] shadow-sm' : 'border-[var(--color-border)]'} ${hoveredClusterId !== undefined && hoveredClusterId !== null && hoveredClusterId !== ranking.cluster_id ? 'opacity-50' : 'opacity-100'}`}
+                onMouseEnter={() => onClusterHover && onClusterHover(ranking.cluster_id)}
+                onMouseLeave={() => onClusterHover && onClusterHover(null)}
+              >
                  <div>
                     <div className="text-[12px] font-bold text-[var(--color-navy-deep)] mb-0.5">Cluster {ranking.cluster_id}</div>
                     <div className="text-[11px] font-medium text-[var(--color-slate-muted)]">Vol: {ranking.volume} | Area: {ranking.area_sq_km} km²</div>

@@ -75,8 +75,8 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
     .map(([name, count]) => ({ name, count }));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         
         <header className="mb-8">
           <h2 className="text-[24px] font-bold text-[var(--color-navy-deep)] tracking-tight">Exploratory Data Analysis</h2>
@@ -84,8 +84,8 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
         </header>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-[var(--color-primary)]/10 rounded-[var(--radius-control)] text-[var(--color-primary)]">
                 <FileText className="w-5 h-5" />
@@ -96,7 +96,7 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
             <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Filtered valid records</p>
           </div>
           
-          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-[var(--color-rose)]/10 rounded-[var(--radius-control)] text-[var(--color-rose)]">
                 <AlertTriangle className="w-5 h-5" />
@@ -107,7 +107,7 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
             <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Most frequent category</p>
           </div>
 
-          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-[var(--color-indigo)]/10 rounded-[var(--radius-control)] text-[var(--color-indigo)]">
                 <Clock className="w-5 h-5" />
@@ -120,7 +120,7 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
             <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Highest frequency window</p>
           </div>
 
-          <div className="bg-[var(--color-surface)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-[var(--color-teal)]/10 rounded-[var(--radius-control)] text-[var(--color-teal)]">
                 <MapIcon className="w-5 h-5" />
@@ -138,10 +138,10 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Crime Types Chart */}
-          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)]">
+          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
             <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Top Crime Categories</h3>
-            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-6">Distribution of incidents by primary type (Top 10)</p>
-            <div className="h-80">
+            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4 md:mb-6">Distribution of incidents by primary type (Top 10)</p>
+            <div className="h-72 md:h-80 w-full overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={crimeTypeData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--color-border)" />
@@ -158,10 +158,10 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
           </div>
 
           {/* District Chart */}
-          <div className="bg-[var(--color-surface)] p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)]">
+          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
             <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Geographic Distribution</h3>
-            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-6">Incident concentration by district or area</p>
-            <div className="h-80 flex items-center justify-center relative">
+            <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4 md:mb-6">Incident concentration by district or area</p>
+            <div className="h-64 md:h-80 flex items-center justify-center relative w-full overflow-hidden">
               {districtData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>

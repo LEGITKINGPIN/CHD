@@ -30,10 +30,10 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
   const hotspots = clusteringResult.hotspot_rankings.slice(0, 10); // Show top 10
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
         
-        <header className="mb-8">
+        <header className="mb-4 md:mb-8">
           <h2 className="text-[24px] font-bold text-[var(--color-navy-deep)] tracking-tight">Patrol Intelligence</h2>
           <p className="text-[14px] text-[var(--color-slate-muted)] mt-1 flex items-center gap-2">
             <span>Decision support based on <strong className="text-[var(--color-navy-deep)]">{algorithm}</strong> historical clustering results.</span>
@@ -131,7 +131,7 @@ export default function PatrolIntelligence({ clusteringResult, algorithm, onLoca
                       <button 
                         onClick={() => centroid && onLocateHotspot(centroid[1], centroid[0])}
                         disabled={!centroid}
-                        className="px-4 py-2 bg-[var(--color-navy-deep)] hover:bg-[var(--color-navy)] text-[var(--color-surface)] text-[12px] font-bold rounded-[var(--radius-control)] transition-colors flex items-center gap-2 disabled:opacity-50"
+                        className="px-4 py-3 md:py-2 bg-[var(--color-navy-deep)] hover:bg-[var(--color-navy)] text-[var(--color-surface)] text-[12px] font-bold rounded-[var(--radius-control)] transition-colors flex items-center gap-2 disabled:opacity-50 min-h-[44px] md:min-h-0"
                       >
                         <MapPin className="w-3.5 h-3.5" /> View on Map
                       </button>

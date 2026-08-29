@@ -64,12 +64,12 @@ export default function Sidebar({
   useEffect(() => {
     // Only apply the offset if we're not on mobile (mobile uses an overlay that covers the whole screen)
     const isMobile = window.innerWidth < 768;
-    const offset = isDesktopCollapsed || (isMobile && !isOpen) ? 0 : (isMobile ? 310 : sidebarWidth);
+    const offset = isMobile ? 0 : (isDesktopCollapsed ? 0 : sidebarWidth);
     document.documentElement.style.setProperty('--sidebar-offset', `${offset}px`);
     
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
-      const off = isDesktopCollapsed || (mobile && !isOpen) ? 0 : (mobile ? 310 : sidebarWidth);
+      const off = mobile ? 0 : (isDesktopCollapsed ? 0 : sidebarWidth);
       document.documentElement.style.setProperty('--sidebar-offset', `${off}px`);
     };
     window.addEventListener('resize', handleResize);
@@ -123,11 +123,11 @@ export default function Sidebar({
     
     <aside 
       className={`absolute h-full z-40 shrink-0 transition-[width] duration-300 ease-in-out ${isResizing ? 'select-none transition-none' : ''}`}
-      style={{ width: isDesktopCollapsed ? '0px' : `${sidebarWidth}px` }}
+      style={{ width: isDesktopCollapsed ? '0px' : (typeof window !== 'undefined' && window.innerWidth < 768 ? (isOpen ? 'min(320px, 85vw)' : '0px') : `${sidebarWidth}px`) }}
     >
       <div 
         className={`absolute top-0 bottom-0 left-0 bg-[var(--color-surface)] border-r border-[var(--color-border)] flex flex-col h-full transition-transform duration-300 ease-in-out shadow-sm ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'} ${isDesktopCollapsed ? 'md:-translate-x-full' : 'md:translate-x-0'}`}
-        style={{ width: `${sidebarWidth}px` }}
+        style={{ width: typeof window !== 'undefined' && window.innerWidth < 768 ? 'min(320px, 85vw)' : `${sidebarWidth}px` }}
       >
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
       {/* 1. DATASET REGISTRY */}
@@ -140,7 +140,7 @@ export default function Sidebar({
           value={selectedDatasetKeys[0] || datasets[0]?.key || ''}
           onChange={(e) => onDatasetChange([e.target.value])}
           disabled={isLoadingDataset || datasets.length === 0}
-          className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[13px] rounded-[var(--radius-control)] px-3 py-2 text-[var(--color-navy-deep)] font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent appearance-none bg-no-repeat disabled:bg-[var(--color-background)] disabled:text-[var(--color-slate-muted)]"
+          className="w-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[13px] rounded-[var(--radius-control)] px-3 py-2 md:py-2 text-[var(--color-navy-deep)] font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent appearance-none bg-no-repeat disabled:bg-[var(--color-background)] disabled:text-[var(--color-slate-muted)] min-h-[44px]"
           style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%2364748B\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em 1.2em', paddingRight: '2.5rem' }}
         >
           {datasets.map(d => (
@@ -168,7 +168,7 @@ export default function Sidebar({
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center justify-center gap-2 text-[12px] font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-slate)] py-1.5 rounded-[var(--radius-control)] shadow-sm hover:bg-[var(--color-background)] transition-colors"
+            className="w-full flex items-center justify-center gap-2 text-[12px] font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-slate)] py-2 md:py-1.5 rounded-[var(--radius-control)] shadow-sm hover:bg-[var(--color-background)] transition-colors min-h-[44px] md:min-h-0"
           >
             <Upload className="w-3.5 h-3.5" />
             Upload Custom CSV
@@ -186,7 +186,7 @@ export default function Sidebar({
               onClick={() => {
                 if (liveUrl && onLiveFetch) onLiveFetch(liveUrl, 2000);
               }}
-              className="flex items-center gap-1 text-[12px] font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-slate)] px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-[var(--color-background)] transition-colors"
+              className="flex items-center gap-1 text-[12px] font-medium bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-slate)] px-2 py-2 md:py-1.5 rounded-[var(--radius-control)] hover:bg-[var(--color-background)] transition-colors min-h-[44px] md:min-h-0"
             >
               <DownloadCloud className="w-3.5 h-3.5" />
               Fetch
@@ -295,19 +295,19 @@ export default function Sidebar({
             <label className="block text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">ALGORITHM</label>
             <div className="flex bg-[var(--color-surface-soft)] p-[3px] rounded-[var(--radius-control)] border border-[var(--color-border)]">
               <button
-                className={`flex-1 text-[11px] py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'K-MEANS' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'}`}
+                className={`flex-1 text-[11px] py-2 md:py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'K-MEANS' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'} min-h-[44px] md:min-h-0`}
                 onClick={() => setSelectedAlgorithm('K-MEANS')}
               >
                 K-Means
               </button>
               <button
-                className={`flex-1 text-[11px] py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'DBSCAN' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'}`}
+                className={`flex-1 text-[11px] py-2 md:py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'DBSCAN' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'} min-h-[44px] md:min-h-0`}
                 onClick={() => setSelectedAlgorithm('DBSCAN')}
               >
                 DBSCAN
               </button>
               <button
-                className={`flex-1 text-[11px] py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'HIERARCHICAL' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'}`}
+                className={`flex-1 text-[11px] py-2 md:py-1.5 rounded-md font-semibold transition-all ${selectedAlgorithm === 'HIERARCHICAL' ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-primary)] border border-[var(--color-border)]' : 'text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] border border-transparent'} min-h-[44px] md:min-h-0`}
                 onClick={() => setSelectedAlgorithm('HIERARCHICAL')}
               >
                 Hierarchical
@@ -357,7 +357,7 @@ export default function Sidebar({
           <button
             onClick={handleRun}
             disabled={isClustering || isLoadingDataset}
-            className="w-full bg-[var(--color-indigo)] hover:bg-[var(--color-indigo)]/90 text-white font-semibold py-2.5 rounded-[var(--radius-control)] text-[13px] flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            className="w-full bg-[var(--color-indigo)] hover:bg-[var(--color-indigo)]/90 text-white font-semibold py-3 md:py-2.5 rounded-[var(--radius-control)] text-[13px] flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm min-h-[44px]"
           >
             {isClustering ? (
               <>
