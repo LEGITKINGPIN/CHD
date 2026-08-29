@@ -10,6 +10,15 @@ export interface CrimeRecord {
   arrest: boolean;
 }
 
+export interface HotspotRanking {
+  cluster_id: number;
+  volume: number;
+  area_sq_km: number;
+  density_per_km2: number;
+  intensity_score: number;
+  risk_category: string;
+}
+
 export interface ClusteringResult {
   labels: number[];
   centroids: number[][];
@@ -21,6 +30,7 @@ export interface ClusteringResult {
     numNoise: number;
     runtimeMs: number;
   };
+  hotspot_rankings?: HotspotRanking[];
 }
 
 export interface DateRange {

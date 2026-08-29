@@ -19,8 +19,12 @@ interface SidebarProps {
   crimeTypes: string[];
   selectedDistricts: string[];
   setSelectedDistricts: (v: string[]) => void;
+  selectedArrest: string[];
+  setSelectedArrest: (v: string[]) => void;
   districts: string[];
   isLoadingDataset: boolean;
+  onUpload?: (file: File) => void;
+  onLiveFetch?: (url: string, limit: number) => void;
 }
 
 export default function Sidebar({
@@ -39,13 +43,19 @@ export default function Sidebar({
   crimeTypes,
   selectedDistricts,
   setSelectedDistricts,
+  selectedArrest,
+  setSelectedArrest,
   districts,
-  isLoadingDataset
+  isLoadingDataset,
+  onUpload,
+  onLiveFetch
 }: SidebarProps) {
   const [k, setK] = useState<number>(5);
   const [eps, setEps] = useState<number>(0.5);
   const [minPts, setMinPts] = useState<number>(10);
   const [isOpen, setIsOpen] = useState(false);
+  const [liveUrl, setLiveUrl] = useState("");
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Just use the first selected dataset for capabilities check for now
   const selectedDataset = datasets.find(d => selectedDatasetKeys.includes(d.key));
@@ -78,16 +88,58 @@ export default function Sidebar({
           <Database className="w-4 h-4 text-slate-500" />
           Dataset Registry
         </h2>
-        <MultiSelectDropdown
-          options={datasets.map(d => ({ value: d.key, label: d.display_name }))}
-          selectedValues={selectedDatasetKeys}
-          onChange={(keys) => onDatasetChange(keys.length ? keys : [datasets[0].key])}
-          disabled={isLoadingDataset}
-          placeholder="Select Datasets"
-        />
+        <select
+          value={selectedDatasetKeys[0] || datasets[0]?.key || ''}
+          onChange={(e) => onDatasetChange([e.target.value])}
+          disabled={isLoadingDataset || datasets.length === 0}
+          className="w-full bg-white border border-slate-200 text-sm rounded-lg px-3 py-2.5 text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-no-repeat disabled:bg-slate-100 disabled:text-slate-400"
+          style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+        >
+          {datasets.map(d => (
+            <option key={d.key} value={d.key}>{d.display_name}</option>
+          ))}
+        </select>
         {isLoadingDataset && (
           <div className="mt-2 text-xs text-blue-600 font-medium">Loading dataset...</div>
         )}
+        
+        <div className="mt-4 space-y-2 border-t border-slate-200 pt-3">
+          <input 
+            type="file" 
+            accept=".csv" 
+            className="hidden" 
+            ref={fileInputRef}
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0] && onUpload) {
+                onUpload(e.target.files[0]);
+              }
+            }}
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 py-2 rounded shadow-sm hover:bg-slate-50 transition-colors"
+          >
+            Upload Custom CSV
+          </button>
+          
+          <div className="flex gap-2">
+            <input 
+              type="text" 
+              placeholder="Live Socrata API URL" 
+              className="flex-1 text-xs border border-slate-200 rounded px-2 py-1"
+              value={liveUrl}
+              onChange={(e) => setLiveUrl(e.target.value)}
+            />
+            <button 
+              onClick={() => {
+                if (liveUrl && onLiveFetch) onLiveFetch(liveUrl, 2000);
+              }}
+              className="text-xs font-semibold bg-slate-800 text-white px-2 py-1 rounded hover:bg-slate-700 transition-colors"
+            >
+              Fetch
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="p-5 border-b border-slate-100">
@@ -143,6 +195,42 @@ export default function Sidebar({
               disabled={!caps?.supports_district}
               placeholder="All Districts"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-2">ARREST STATUS</label>
+            <div className="flex flex-row gap-5">
+              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 text-rose-500 rounded border-slate-300 focus:ring-rose-500"
+                  checked={selectedArrest.includes('Arrest Made')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedArrest(['Arrest Made']);
+                    } else {
+                      setSelectedArrest(['ALL']);
+                    }
+                  }}
+                />
+                Arrest Made
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 text-rose-500 rounded border-slate-300 focus:ring-rose-500"
+                  checked={selectedArrest.includes('Pending/No Arrest')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedArrest(['Pending/No Arrest']);
+                    } else {
+                      setSelectedArrest(['ALL']);
+                    }
+                  }}
+                />
+                Pending/No Arrest
+              </label>
+            </div>
           </div>
         </div>
       </div>

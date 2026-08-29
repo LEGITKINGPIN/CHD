@@ -27,11 +27,18 @@ class DatasetLoader:
         min_lat, max_lat = float("inf"), float("-inf")
         min_lng, max_lng = float("inf"), float("-inf")
         all_dates = []
+        total_source_rows = 0
+        total_valid_rows = 0
+        total_dropped_rows = 0
 
         for key in keys:
             crimes, meta = cls._get_single_data(key)
             all_crimes.extend(crimes)
             all_types.update(meta["crimeTypes"])
+            total_source_rows += meta.get("totalSourceRows", 0)
+            total_valid_rows += meta.get("validRows", 0)
+            total_dropped_rows += meta.get("droppedRows", 0)
+            
             b = meta["boundingBox"]
             min_lat = min(min_lat, b["minLat"])
             max_lat = max(max_lat, b["maxLat"])
@@ -48,6 +55,9 @@ class DatasetLoader:
 
         merged_meta = {
             "totalCrimes": len(all_crimes),
+            "totalSourceRows": total_source_rows,
+            "validRows": total_valid_rows,
+            "droppedRows": total_dropped_rows,
             "dateRange": {"start": start_date, "end": end_date},
             "boundingBox": {
                 "minLat": min_lat if min_lat != float("inf") else 0,
@@ -190,6 +200,9 @@ class DatasetLoader:
 
         metadata = {
             "totalCrimes": len(crimes),
+            "totalSourceRows": len(df),
+            "validRows": len(crimes),
+            "droppedRows": skipped,
             "dateRange": {"start": start_date, "end": end_date},
             "boundingBox": {
                 "minLat": min_lat,

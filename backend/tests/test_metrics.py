@@ -9,7 +9,7 @@ def test_metrics_undefined():
     # 2 points = 1 DBSCAN cluster (all noise if minPts > 2)
     coords = np.array([[41.8, -87.6], [41.81, -87.61]])
 
-    labels, centroids, metrics = run_clustering(
+    labels, centroids, metrics, hotspot_rankings = run_clustering(
         coords, "DBSCAN", {"eps": 10, "minPts": 5}
     )
 

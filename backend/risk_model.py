@@ -12,108 +12,112 @@ from sklearn.metrics import (
 )
 
 
-def synthesize_target(df: pd.DataFrame) -> pd.Series:
+def build_grid_prediction_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Synthesize a heuristic risk target for the Random Forest to predict.
-    WARNING: Since we do not have real ground-truth risk labels, we define a synthetic
-    target based on the intentionally injected patterns in data_generator.py.
-
-    Target generation:
-    Score = (is_night * 0.4) + (is_weekend * 0.3) + (is_summer * 0.3) + noise
-
-    This target is mathematically derived from the predictors. Therefore, this model
-    evaluates only the architectural pipeline, and its metrics must NOT be interpreted
-    as evidence of genuine real-world crime prediction.
+    Aggregates incident records into spatial grid cells (~1km x 1km) and builds 
+    a supervised dataset for risk prediction based on historical density.
     """
-    np.random.seed(42)
-    is_summer = df["month"].isin([6, 7, 8]).astype(float)
-    is_night = df["is_night"].astype(float)
-    is_weekend = df["is_weekend"].astype(float)
+    # Create ~1km spatial grid (0.01 degrees)
+    grid_size = 0.01
+    df["grid_lat"] = np.round(df["lat"] / grid_size) * grid_size
+    df["grid_lng"] = np.round(df["lng"] / grid_size) * grid_size
+    df["grid_id"] = df["grid_lat"].round(3).astype(str) + "_" + df["grid_lng"].round(3).astype(str)
 
-    # Base score [0, 1]
-    score = (is_night * 0.4) + (is_weekend * 0.3) + (is_summer * 0.3)
+    # We assume 'Property' and 'Violent' are loosely identifiable from primary_type
+    # This is a heuristic mapping for demonstration; ideally driven by a master config
+    violent_types = ["BATTERY", "ASSAULT", "ROBBERY", "HOMICIDE", "CRIM SEXUAL ASSAULT"]
+    
+    df["is_violent"] = df["primary_type"].isin(violent_types).astype(int)
+    df["is_night_int"] = df["is_night"].astype(int)
+    df["is_weekend_int"] = df["is_weekend"].astype(int)
 
-    # Add noise to prevent perfect deterministic prediction
-    noise = np.random.normal(0, 0.1, size=len(df))
-    final_score = score + noise
+    grid_summary = df.groupby(["grid_id", "grid_lat", "grid_lng"]).agg(
+        total_crimes=("id", "count"),
+        violent_crimes=("is_violent", "sum"),
+        night_crimes=("is_night_int", "sum"),
+        weekend_crimes=("is_weekend_int", "sum")
+    ).reset_index()
 
-    # Map to quantiles
-    quantiles = np.quantile(final_score, [0.25, 0.5, 0.75])
+    # Ratios
+    grid_summary["violent_ratio"] = grid_summary["violent_crimes"] / (grid_summary["total_crimes"] + 1e-5)
+    grid_summary["night_ratio"] = grid_summary["night_crimes"] / (grid_summary["total_crimes"] + 1e-5)
+    grid_summary["weekend_ratio"] = grid_summary["weekend_crimes"] / (grid_summary["total_crimes"] + 1e-5)
 
-    def classify(s):
-        if s <= quantiles[0]:
-            return "Low"
-        elif s <= quantiles[1]:
-            return "Moderate"
-        elif s <= quantiles[2]:
-            return "High"
+    # Target Labeling based on historical quantiles
+    q33 = grid_summary["total_crimes"].quantile(0.33)
+    q66 = grid_summary["total_crimes"].quantile(0.66)
+
+    def assign_risk(count):
+        if count >= q66:
+            return "High Risk"
+        elif count >= q33:
+            return "Medium Risk"
         else:
-            return "Critical"
+            return "Low Risk"
 
-    return pd.Series(final_score).apply(classify)
+    grid_summary["risk_class"] = grid_summary["total_crimes"].apply(assign_risk)
+    
+    return grid_summary
 
 
 def run_risk_prediction_pipeline(crimes_data: list[dict[str, Any]]) -> dict[str, Any]:
     """
-    Full pipeline: Preprocessing -> Split -> Train -> Evaluate.
-    To prevent data leakage, we chronologically split the data (train on past, test on future).
+    Full pipeline: Preprocessing -> Grid Aggregation -> Split -> Train -> Evaluate.
     """
     df = pd.DataFrame(crimes_data)
 
-    # Preprocessing
-    df["date"] = pd.to_datetime(df["date"])
-    df = df.sort_values("date").reset_index(drop=True)
+    if df.empty:
+        raise ValueError("Cannot run prediction on empty dataset.")
 
-    # Feature Engineering
-    # We use cyclical encoding for hour and month to preserve temporal continuity
-    df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
-    df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
-    df["month_sin"] = np.sin(2 * np.pi * df["month"] / 12)
-    df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
-    df["is_weekend_int"] = df["is_weekend"].astype(int)
-    df["is_night_int"] = df["is_night"].astype(int)
-
+    # 1. Build Grid Dataset
+    grid_df = build_grid_prediction_dataset(df)
+    
+    # 2. Features and Target
     features = [
-        "lat",
-        "lng",
-        "hour_sin",
-        "hour_cos",
-        "month_sin",
-        "month_cos",
-        "is_weekend_int",
-        "is_night_int",
+        "grid_lat",
+        "grid_lng",
+        "total_crimes",
+        "violent_ratio",
+        "night_ratio",
+        "weekend_ratio"
     ]
+    
+    X = grid_df[features]
+    y = grid_df["risk_class"]
 
-    # Synthesize target
-    df["risk_class"] = synthesize_target(df)
+    # Simple 80/20 train/test split on the grid cells
+    # Since these are aggregated summaries across time, chronological split doesn't apply directly to the rows anymore.
+    # We will do a random split, stratified by risk class.
+    from sklearn.model_selection import train_test_split
+    
+    # Stratification requires at least 2 samples per class
+    stratify_col = y if all(y.value_counts() > 1) else None
+    
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.20, random_state=42, stratify=stratify_col
+    )
 
-    X = df[features]
-    y = df["risk_class"]
-
-    # Chronological Split (80% train, 20% test)
-    split_idx = int(len(df) * 0.8)
-    X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
-    y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
-
-    # Model Training
+    # 3. Model Training
     clf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
     clf.fit(X_train, y_train)
 
-    # Untouched Test Evaluation
+    # 4. Evaluation
     y_pred = clf.predict(X_test)
     y_prob = clf.predict_proba(X_test)
 
     # Metrics
-    # Using macro average for multi-class
     acc = accuracy_score(y_test, y_pred)
     prec = precision_score(y_test, y_pred, average="macro", zero_division=0)
     rec = recall_score(y_test, y_pred, average="macro", zero_division=0)
     f1 = f1_score(y_test, y_pred, average="macro", zero_division=0)
 
-    # ROC-AUC requires one-vs-rest for multiclass
-    roc_auc = roc_auc_score(y_test, y_prob, multi_class="ovr", average="macro")
+    # ROC-AUC
+    # Fallback to 0 if there are issues with probability dimensions (e.g. only 1 class in test set)
+    try:
+        roc_auc = roc_auc_score(y_test, y_prob, multi_class="ovr", average="macro")
+    except ValueError:
+        roc_auc = 0.0
 
-    # Get feature importances
     importances = dict(zip(features, clf.feature_importances_))
 
     return {

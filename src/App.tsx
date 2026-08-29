@@ -10,6 +10,9 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import MetricsPanel from './components/MetricsPanel';
 import MacroDashboard from './components/MacroDashboard';
+import EdaDashboard from './components/EdaDashboard';
+import CompareAlgorithms from './components/CompareAlgorithms';
+import PatrolIntelligence from './components/PatrolIntelligence';
 
 export default function App() {
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
@@ -19,11 +22,18 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   
   // Navigation State
-  const [activeView, setActiveView] = useState<'map' | 'macro'>('map');
+  const [activeView, setActiveView] = useState<'map' | 'eda' | 'trends' | 'compare' | 'patrol'>('map');
+  
+  // Custom Area Marker
+  const [customMarker, setCustomMarker] = useState<{lng: number, lat: number, radiusKm: number} | null>(null);
+  
+  // Map Focus
+  const [focusCoordinate, setFocusCoordinate] = useState<[number, number] | null>(null);
   
   // Filter states
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['ALL']);
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>(['ALL']);
+  const [selectedArrest, setSelectedArrest] = useState<string[]>(['ALL']);
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<string>('K-MEANS');
   
   // ML Results
@@ -69,16 +79,68 @@ export default function App() {
       // Clear all results and incompatible filters
       setClusteringResult(null);
       
-      // Just check the first selected dataset for simplicity
-      const datasetInfo = datasets.find(d => datasetKeys.includes(d.key)) || datasets[0];
-      if (datasetInfo && !datasetInfo.capabilities.supports_district) {
-        setSelectedDistricts(['ALL']);
-      }
-      if (datasetInfo && !datasetInfo.capabilities.supports_crime_type) {
-        setSelectedTypes(['ALL']);
-      }
+      // Reset filters when switching datasets to avoid applying districts/types that don't exist
+      setSelectedTypes(['ALL']);
+      setSelectedDistricts(['ALL']);
+      setSelectedArrest(['ALL']);
     } catch (err) {
       console.error("Failed to load data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpload = async (file: File) => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Upload failed");
+      
+      // Refresh datasets
+      const dsetsRes = await fetch('/api/datasets');
+      const dsets = await dsetsRes.json();
+      setDatasets(dsets);
+      
+      // Load the new dataset
+      await fetchData([data.dataset_key]);
+      alert("Dataset uploaded successfully!");
+    } catch (err: any) {
+      alert(`Upload failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLiveFetch = async (url: string, limit: number) => {
+    setLoading(true);
+    try {
+      const formData = new URLSearchParams();
+      formData.append("url", url);
+      formData.append("limit", limit.toString());
+      
+      const res = await fetch("/api/fetch-live", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Fetch failed");
+      
+      // Refresh datasets
+      const dsetsRes = await fetch('/api/datasets');
+      const dsets = await dsetsRes.json();
+      setDatasets(dsets);
+      
+      // Load the new dataset
+      await fetchData([data.dataset_key]);
+      alert("Live data fetched successfully!");
+    } catch (err: any) {
+      alert(`Fetch failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -92,8 +154,20 @@ export default function App() {
     if (!selectedDistricts.includes('ALL') && selectedDistricts.length > 0) {
       result = result.filter(c => selectedDistricts.includes(c.district));
     }
+    if (!selectedArrest.includes('ALL') && selectedArrest.length > 0) {
+      result = result.filter(c => {
+        if (selectedArrest.includes('Arrest Made') && c.arrest) return true;
+        if (selectedArrest.includes('Pending/No Arrest') && !c.arrest) return true;
+        return false;
+      });
+    }
     return result;
-  }, [crimes, selectedTypes, selectedDistricts]);
+  }, [crimes, selectedTypes, selectedDistricts, selectedArrest]);
+
+  // Clear clustering result when filters change, as the underlying data is different
+  useEffect(() => {
+    setClusteringResult(null);
+  }, [selectedTypes, selectedDistricts, selectedArrest]);
 
   const runClustering = async (algorithm: string, params: any) => {
     if (filteredCrimes.length === 0) return;
@@ -107,6 +181,7 @@ export default function App() {
           params, 
           filter: selectedTypes, 
           district: selectedDistricts,
+          arrest: selectedArrest,
           dataset: selectedDatasetKeys.join(',')
         })
       });
@@ -155,23 +230,65 @@ export default function App() {
           crimeTypes={Array.from(new Set(crimes.map(c => c.primary_type)))}
           selectedDistricts={selectedDistricts}
           setSelectedDistricts={setSelectedDistricts}
+          selectedArrest={selectedArrest}
+          setSelectedArrest={setSelectedArrest}
           districts={(Array.from(new Set(crimes.map(c => c.district))) as string[]).sort()}
           isLoadingDataset={loading}
+          onUpload={handleUpload}
+          onLiveFetch={handleLiveFetch}
         />
         <main className="flex-1 relative">
           <MapWorkspace 
             crimes={filteredCrimes} 
             clusteringResult={clusteringResult}
             metadata={metadata}
+            customMarker={customMarker}
+            setCustomMarker={setCustomMarker}
+            onNavigateCompare={() => setActiveView('compare')}
+            focusCoordinate={focusCoordinate}
           />
             {clusteringResult && (
               <MetricsPanel result={clusteringResult} algorithm={selectedAlgorithm} />
             )}
           </main>
         </div>
-      ) : (
-        <MacroDashboard />
-      )}
+      ) : activeView === 'trends' ? (
+        <MacroDashboard 
+          selectedDatasetKeys={selectedDatasetKeys} 
+          selectedTypes={selectedTypes} 
+          selectedDistricts={selectedDistricts} 
+          selectedArrest={selectedArrest}
+        />
+      ) : activeView === 'eda' ? (
+        <EdaDashboard 
+          selectedDatasetKeys={selectedDatasetKeys} 
+          selectedTypes={selectedTypes} 
+          selectedDistricts={selectedDistricts} 
+          selectedArrest={selectedArrest}
+        />
+      ) : activeView === 'compare' ? (
+        <CompareAlgorithms 
+          selectedDatasetKeys={selectedDatasetKeys} 
+          selectedTypes={selectedTypes} 
+          selectedDistricts={selectedDistricts}
+          selectedArrest={selectedArrest}
+          customMarker={customMarker}
+          onVisualizeAlgorithm={(algo) => {
+            setSelectedAlgorithm(algo);
+            setActiveView('map');
+            runClustering(algo, algo === 'DBSCAN' ? {eps: 1.0, minPts: 10} : {k: 5}); // Rerun with defaults to visualize
+          }}
+        />
+      ) : activeView === 'patrol' ? (
+        <PatrolIntelligence 
+          clusteringResult={clusteringResult} 
+          algorithm={selectedAlgorithm} 
+          onLocateHotspot={(lng, lat) => {
+            setFocusCoordinate([lng, lat]);
+            setActiveView('map');
+          }}
+        />
+      ) : null}
     </div>
   );
 }

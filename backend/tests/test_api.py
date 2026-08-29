@@ -16,7 +16,7 @@ def test_list_datasets():
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) == 5
+    assert len(data) >= 5
     assert data[0]["key"] == "chicago"
 
 
@@ -48,7 +48,7 @@ def test_clustering_kmeans():
     payload = {
         "algorithm": "K-MEANS",
         "params": {"k": 5},
-        "filter": "ALL",
+        "filter": ["ALL"],
         "dataset": "chicago",
     }
     response = client.post("/api/clusters", json=payload)

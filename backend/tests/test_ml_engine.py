@@ -16,7 +16,7 @@ def test_kmeans_clustering():
         ]
     )
 
-    labels, centroids, metrics = run_clustering(coords, "K-MEANS", {"k": 2})
+    labels, centroids, metrics, hotspot_rankings = run_clustering(coords, "K-MEANS", {"k": 2})
 
     assert len(set(labels)) == 2
     assert len(centroids) == 2
@@ -36,7 +36,7 @@ def test_dbscan_clustering():
         ]
     )
 
-    labels, centroids, metrics = run_clustering(
+    labels, centroids, metrics, hotspot_rankings = run_clustering(
         coords, "DBSCAN", {"eps": 1.0, "minPts": 3}
     )
 
@@ -49,7 +49,7 @@ def test_dbscan_clustering():
 def test_degenerate_clusters():
     # Only one cluster possible
     coords = np.array([[41.8, -87.6], [41.8, -87.6]])
-    labels, centroids, metrics = run_clustering(coords, "K-MEANS", {"k": 1})
+    labels, centroids, metrics, hotspot_rankings = run_clustering(coords, "K-MEANS", {"k": 1})
 
     assert len(set(labels)) == 1
     # Metrics like silhouette might be 0.0 or undefined, handled gracefully

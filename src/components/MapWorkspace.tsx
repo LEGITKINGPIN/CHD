@@ -1,21 +1,42 @@
-import React, { useMemo, useState } from 'react';
-import { Map, Source, Layer, Popup, useMap } from '@vis.gl/react-maplibre';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { Map, Source, Layer, Popup, useMap, Marker } from '@vis.gl/react-maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { CrimeRecord, ClusteringResult, Metadata } from '../types';
 import * as turf from '@turf/turf';
-import { useEffect, useRef } from 'react';
+import { Search, Layers, MapPin } from 'lucide-react';
 
 interface MapWorkspaceProps {
   crimes: CrimeRecord[];
   clusteringResult: ClusteringResult | null;
   metadata: Metadata | null;
+  customMarker: {lng: number, lat: number, radiusKm: number} | null;
+  setCustomMarker: (marker: {lng: number, lat: number, radiusKm: number} | null) => void;
+  onNavigateCompare: () => void;
+  focusCoordinate?: [number, number] | null;
 }
 
-export default function MapWorkspace({ crimes, clusteringResult, metadata }: MapWorkspaceProps) {
+export default function MapWorkspace({ crimes, clusteringResult, metadata, customMarker, setCustomMarker, onNavigateCompare, focusCoordinate }: MapWorkspaceProps) {
   const [hoverInfo, setHoverInfo] = useState<{lng: number, lat: number, props: any, type: string} | null>(null);
   const [selectedCrime, setSelectedCrime] = useState<any>(null);
+  const [localClusters, setLocalClusters] = useState<any>(null);
+  const [localAlgorithm, setLocalAlgorithm] = useState<'K-MEANS' | 'DBSCAN' | 'HIERARCHICAL'>('K-MEANS');
   const mapRef = useRef<any>(null);
+
+  const MAP_STYLES = [
+    { id: 'light', name: 'Light Map', url: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' },
+    { id: 'dark', name: 'Dark Map', url: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json' },
+    { id: 'voyager', name: 'Voyager Map', url: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json' }
+  ];
+  const [currentStyle, setCurrentStyle] = useState(MAP_STYLES[0].url);
+  const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    setLocalClusters(null);
+  }, [customMarker?.lng, customMarker?.lat, customMarker?.radiusKm, localAlgorithm]);
 
   const onMapClick = (e: any) => {
     if (e.features && e.features.length > 0) {
@@ -50,6 +71,13 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
          // Clustered points (individual colored points) have original properties
          setSelectedCrime(feature.properties);
       }
+    } else {
+      // Clicked on empty map, set or update custom marker
+      setCustomMarker({
+        lng: e.lngLat.lng,
+        lat: e.lngLat.lat,
+        radiusKm: customMarker ? customMarker.radiusKm : 1.0 // Preserve radius if already set
+      });
     }
   };
 
@@ -71,6 +99,13 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
       }
     }
   }, [metadata]);
+
+  useEffect(() => {
+    if (focusCoordinate && mapRef.current) {
+      const map = mapRef.current.getMap();
+      map.flyTo({ center: focusCoordinate, zoom: 14, duration: 1500 });
+    }
+  }, [focusCoordinate]);
 
   const onInteractiveHover = (e: any) => {
     if (e.features && e.features.length > 0) {
@@ -123,9 +158,12 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
     };
   }, [crimes]);
 
+  // Safety check to ensure clustering labels match the current crimes length
+  const isClusteringValid = clusteringResult && clusteringResult.labels.length === crimes.length;
+
   // Generate GeoJSON for cluster convex hulls
   const clusterHullsGeoJSON = useMemo(() => {
-    if (!clusteringResult || clusteringResult.labels.length !== crimes.length) return null;
+    if (!isClusteringValid) return null;
     
     // Group points by cluster id
     const clusters = new globalThis.Map<number, number[][]>();
@@ -165,7 +203,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
 
   // Generate colored points for clusters
   const clusteredPointsGeoJSON = useMemo(() => {
-    if (!clusteringResult || clusteringResult.labels.length !== crimes.length) return null;
+    if (!isClusteringValid) return null;
     return {
       type: 'FeatureCollection',
       features: crimes.map((c, i) => ({
@@ -179,8 +217,176 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
     };
   }, [crimes, clusteringResult]);
 
-  // Use a minimal, clean basemap 
-  const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+  // Marker features
+  const customRadiusGeoJSON = useMemo(() => {
+    if (!customMarker) return null;
+    try {
+      const center = turf.point([customMarker.lng, customMarker.lat]);
+      return turf.circle(center, customMarker.radiusKm, { units: 'kilometers', steps: 64 });
+    } catch (e) {
+      return null;
+    }
+  }, [customMarker]);
+
+  const crimesInRadiusGeoJSON = useMemo(() => {
+    if (!customMarker) return { type: 'FeatureCollection', features: [] };
+    const center = turf.point([customMarker.lng, customMarker.lat]);
+    const features = [];
+    for (const c of crimes) {
+        const pt = turf.point([c.lng, c.lat], c);
+        if (turf.distance(center, pt, { units: 'kilometers' }) <= customMarker.radiusKm) {
+            features.push(pt);
+        }
+    }
+    return turf.featureCollection(features);
+  }, [crimes, customMarker]);
+
+  const localClusterHullsGeoJSON = useMemo(() => {
+    if (!localClusters) return null;
+    const clusters = new globalThis.Map<number, number[][]>();
+    localClusters.features.forEach((f: any) => {
+      const label = f.properties.cluster;
+      if (!clusters.has(label)) clusters.set(label, []);
+      clusters.get(label)!.push(f.geometry.coordinates);
+    });
+
+    const features: any[] = [];
+    clusters.forEach((points, label) => {
+      if (points.length >= 3) {
+        try {
+          const fc = turf.featureCollection(points.map(p => turf.point(p)));
+          const hull = turf.convex(fc);
+          if (hull) {
+            hull.properties = { clusterId: `local-${label}`, count: points.length };
+            features.push(hull);
+          }
+        } catch (e) {}
+      }
+    });
+
+    return { type: 'FeatureCollection', features };
+  }, [localClusters]);
+
+  const handleLocalClustering = () => {
+    if (crimesInRadiusGeoJSON.features.length < 3) return;
+    try {
+        let clustered;
+        if (localAlgorithm === 'K-MEANS') {
+          const k = Math.min(5, Math.max(1, Math.floor(crimesInRadiusGeoJSON.features.length / 10)));
+          clustered = turf.clustersKmeans(crimesInRadiusGeoJSON, { numberOfClusters: k });
+        } else if (localAlgorithm === 'DBSCAN') {
+          // DBSCAN with distance in kilometers. 100 meters = 0.1km.
+          // Using 0.2km radius, min 3 points for typical urban density.
+          clustered = turf.clustersDbscan(crimesInRadiusGeoJSON, 0.2, { units: 'kilometers', minPoints: 3 });
+        } else if (localAlgorithm === 'HIERARCHICAL') {
+          const features = crimesInRadiusGeoJSON.features;
+          const k = Math.min(5, Math.max(1, Math.floor(features.length / 10)));
+          
+          if (features.length > 1500) {
+             alert("Too many points for client-side Hierarchical clustering. Please reduce the radius.");
+             return;
+          }
+
+          const N = features.length;
+          const active = new Array(N).fill(true);
+          const dists = new Array(N).fill(0).map(() => new Float64Array(N));
+          for(let i=0; i<N; i++) {
+            for(let j=i+1; j<N; j++) {
+              // rough euclidean distance is faster than turf.distance for local clustering
+              const dx = features[i].geometry.coordinates[0] - features[j].geometry.coordinates[0];
+              const dy = features[i].geometry.coordinates[1] - features[j].geometry.coordinates[1];
+              const d = dx*dx + dy*dy;
+              dists[i][j] = d;
+              dists[j][i] = d;
+            }
+          }
+
+          const clusterAssignments = features.map((_, i) => [i]);
+          let numClusters = N;
+
+          while(numClusters > k) {
+            let minDist = Infinity;
+            let mergeA = -1, mergeB = -1;
+            for(let i=0; i<N; i++) {
+              if (!active[i]) continue;
+              for(let j=i+1; j<N; j++) {
+                if (!active[j]) continue;
+                if (dists[i][j] < minDist) {
+                  minDist = dists[i][j];
+                  mergeA = i;
+                  mergeB = j;
+                }
+              }
+            }
+
+            if (mergeA === -1) break;
+
+            active[mergeB] = false;
+            for(let i=0; i<N; i++) {
+              if (!active[i] || i === mergeA) continue;
+              // Complete Linkage (Math.max) creates more compact, spherical clusters than Single Linkage
+              const newD = Math.max(dists[mergeA][i], dists[mergeB][i]); 
+              dists[mergeA][i] = newD;
+              dists[i][mergeA] = newD;
+            }
+            
+            clusterAssignments[mergeA] = clusterAssignments[mergeA].concat(clusterAssignments[mergeB]);
+            numClusters--;
+          }
+
+          const resultFeatures = JSON.parse(JSON.stringify(features));
+          let currentClusterId = 0;
+          for(let i=0; i<N; i++) {
+            if (active[i]) {
+              for(const idx of clusterAssignments[i]) {
+                resultFeatures[idx].properties.cluster = currentClusterId;
+              }
+              currentClusterId++;
+            }
+          }
+          clustered = turf.featureCollection(resultFeatures);
+        }
+        setLocalClusters(clustered);
+    } catch (e) {
+        console.error("Local clustering failed", e);
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    // Check if it's coordinates: "lat, lng"
+    const coordMatch = searchQuery.match(/^(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)$/);
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1]);
+      const lng = parseFloat(coordMatch[3]);
+      if (mapRef.current) {
+        mapRef.current.getMap().flyTo({ center: [lng, lat], zoom: 14, duration: 1500 });
+      }
+      return;
+    }
+
+    // Otherwise use Nominatim for geocoding
+    try {
+      setIsSearching(true);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        if (mapRef.current) {
+          mapRef.current.getMap().flyTo({ center: [lng, lat], zoom: 14, duration: 1500 });
+        }
+      } else {
+        alert("Location not found. Try searching a city, address, or 'lat, lng'.");
+      }
+    } catch (err) {
+      console.error("Geocoding failed", err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const initialViewState = metadata ? {
     longitude: (metadata.boundingBox.minLng + metadata.boundingBox.maxLng) / 2,
@@ -194,13 +400,68 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
 
   return (
     <div className="w-full h-full relative" style={{ width: '100%', height: '100%' }}>
+      
+      {/* Top Left Controls: Search Bar */}
+      <div className="absolute top-4 left-4 z-10 w-80">
+        <form onSubmit={handleSearch} className="flex bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden">
+          <input 
+            type="text" 
+            placeholder="Search address or lat, lng..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 px-4 py-2.5 text-sm outline-none text-slate-700"
+          />
+          <button 
+            type="submit" 
+            disabled={isSearching}
+            className="px-4 bg-slate-50 text-slate-600 hover:text-slate-900 border-l border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-50 flex items-center justify-center"
+          >
+            {isSearching ? (
+               <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"/>
+            ) : (
+               <Search className="w-4 h-4" />
+            )}
+          </button>
+        </form>
+      </div>
+
+      {/* Top Right Controls: Map Layers */}
+      <div className="absolute top-4 right-4 z-10">
+        <div className="relative">
+          <button 
+            onClick={() => setIsLayerMenuOpen(!isLayerMenuOpen)}
+            className="bg-white p-2.5 rounded-lg shadow-md border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-2"
+          >
+            <Layers className="w-5 h-5" />
+            <span className="text-sm font-semibold">Map Style</span>
+          </button>
+          
+          {isLayerMenuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden py-1">
+              {MAP_STYLES.map(style => (
+                <button
+                  key={style.id}
+                  onClick={() => {
+                    setCurrentStyle(style.url);
+                    setIsLayerMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${currentStyle === style.url ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}
+                >
+                  {style.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <Map
         ref={mapRef}
         mapLib={maplibregl}
         style={{ width: '100%', height: '100%' }}
         mapLibreLogo={false}
         initialViewState={initialViewState}
-        mapStyle={MAP_STYLE}
+        mapStyle={currentStyle}
         interactiveLayerIds={['crime-points', 'crime-clusters', 'clustered-points-circle', 'cluster-hulls-fill']}
         onMouseMove={onInteractiveHover}
         onClick={onMapClick}
@@ -215,7 +476,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
           clusterMaxZoom={14}
           clusterRadius={50}
         >
-          {!clusteringResult && (
+          {!isClusteringValid && (
             <Layer
               id="crime-points"
               type="circle"
@@ -230,7 +491,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
             />
           )}
               
-          {!clusteringResult && (
+          {!isClusteringValid && (
             <Layer
               id="crime-clusters"
               type="circle"
@@ -257,7 +518,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
             />
           )}
 
-          {!clusteringResult && (
+          {!isClusteringValid && (
             <Layer
               id="cluster-count"
               type="symbol"
@@ -298,7 +559,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
         </Source>
 
         {/* If clustered, show convex hulls and colored points */}
-        {clusteringResult && clusterHullsGeoJSON && (
+        {isClusteringValid && clusterHullsGeoJSON && (
           <Source id="cluster-hulls" type="geojson" data={clusterHullsGeoJSON as any}>
             <Layer
               id="cluster-hulls-fill"
@@ -321,7 +582,7 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
           </Source>
         )}
 
-        {clusteringResult && clusteredPointsGeoJSON && (
+        {isClusteringValid && clusteredPointsGeoJSON && (
           <Source id="clustered-points" type="geojson" data={clusteredPointsGeoJSON as any}>
             <Layer
               id="clustered-points-circle"
@@ -393,7 +654,154 @@ export default function MapWorkspace({ crimes, clusteringResult, metadata }: Map
             </div>
           </Popup>
         )}
+
+        {customRadiusGeoJSON && (
+          <Source id="custom-radius" type="geojson" data={customRadiusGeoJSON as any}>
+            <Layer
+              id="custom-radius-fill"
+              type="fill"
+              paint={{
+                'fill-color': '#f43f5e',
+                'fill-opacity': 0.1
+              }}
+            />
+            <Layer
+              id="custom-radius-line"
+              type="line"
+              paint={{
+                'line-color': '#f43f5e',
+                'line-width': 2,
+                'line-dasharray': [2, 2]
+              }}
+            />
+          </Source>
+        )}
+
+        {localClusterHullsGeoJSON && (
+          <Source id="local-cluster-hulls" type="geojson" data={localClusterHullsGeoJSON as any}>
+            <Layer
+              id="local-cluster-hulls-fill"
+              type="fill"
+              paint={{
+                'fill-color': '#eab308',
+                'fill-opacity': 0.3
+              }}
+            />
+            <Layer
+              id="local-cluster-hulls-line"
+              type="line"
+              paint={{
+                'line-color': '#ca8a04',
+                'line-width': 2,
+                'line-dasharray': [2, 2]
+              }}
+            />
+          </Source>
+        )}
+        
+        {localClusters && (
+          <Source id="local-clustered-points" type="geojson" data={localClusters as any}>
+            <Layer
+              id="local-clustered-points-circle"
+              type="circle"
+              paint={{
+                'circle-radius': 5,
+                'circle-color': [
+                  'step', ['%', ['get', 'cluster'], 3], 
+                  '#eab308', 1, 
+                  '#14b8a6', 2, 
+                  '#ec4899'
+                ],
+                'circle-opacity': 0.9,
+                'circle-stroke-width': 1,
+                'circle-stroke-color': '#ffffff'
+              }}
+            />
+          </Source>
+        )}
+
+        {customMarker && (
+          <Marker
+            longitude={customMarker.lng}
+            latitude={customMarker.lat}
+            anchor="bottom"
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setCustomMarker(null);
+            }}
+          >
+            <div className="text-rose-600 drop-shadow-md cursor-pointer hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3" fill="white"/></svg>
+            </div>
+          </Marker>
+        )}
+
+        {/* The popup is removed from here. The marker stays. */}
       </Map>
+
+      {/* Area Analysis Panel (Moved to bottom right, off the map pin) */}
+      {customMarker && (
+        <div className="absolute bottom-6 right-6 z-20 bg-white/90 backdrop-blur-md rounded-xl shadow-2xl p-4 w-72 border border-slate-200">
+          <div className="font-bold text-slate-900 border-b pb-2 mb-3 border-slate-200 flex justify-between items-center">
+              Area Analysis
+              <button onClick={() => setCustomMarker(null)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+          </div>
+          <div className="flex justify-between items-end mb-2">
+              <span className="text-xs font-semibold text-slate-500 tracking-wider">RADIUS</span>
+              <span className="text-sm font-bold text-slate-800">{customMarker.radiusKm.toFixed(1)} km</span>
+          </div>
+          <input 
+              type="range" 
+              min="0.1" max="10" step="0.1" 
+              value={customMarker.radiusKm}
+              onChange={(e) => setCustomMarker({...customMarker, radiusKm: parseFloat(e.target.value)})}
+              className="w-full mb-4 accent-rose-500 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+          />
+          <div className="bg-rose-50/80 p-3 rounded-lg border border-rose-100 flex items-center justify-between mb-2">
+              <div className="text-xs font-bold text-rose-700 uppercase tracking-wider">Incidents</div>
+              <div className="text-xl font-black text-rose-700">{(crimesInRadiusGeoJSON as any).features.length.toLocaleString()}</div>
+          </div>
+          {!localClusters && (crimesInRadiusGeoJSON as any).features.length >= 3 && (
+            <div className="mb-2 bg-slate-50/80 p-2 rounded-lg border border-slate-100">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Algorithm</span>
+                <select 
+                  value={localAlgorithm}
+                  onChange={(e) => setLocalAlgorithm(e.target.value as 'K-MEANS' | 'DBSCAN' | 'HIERARCHICAL')}
+                  className="text-xs bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 font-medium outline-none"
+                >
+                  <option value="K-MEANS">K-Means</option>
+                  <option value="DBSCAN">DBSCAN</option>
+                  <option value="HIERARCHICAL">Hierarchical</option>
+                </select>
+              </div>
+              <button 
+                onClick={handleLocalClustering}
+                className="w-full bg-slate-800 text-white text-xs font-semibold py-1.5 rounded-md hover:bg-slate-700 transition-colors shadow-sm"
+              >
+                Cluster Local Hotspots
+              </button>
+            </div>
+          )}
+          {localClusters && (
+            <div className="text-xs font-semibold text-emerald-700 bg-emerald-50/80 p-2 rounded text-center border border-emerald-100 mb-2">
+              Local clustering active
+            </div>
+          )}
+          <button 
+            onClick={onNavigateCompare}
+            disabled={(crimesInRadiusGeoJSON as any).features.length < 5}
+            className={`w-full text-white text-xs font-semibold py-2 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 ${(crimesInRadiusGeoJSON as any).features.length < 5 ? "bg-slate-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"}`}
+            title={(crimesInRadiusGeoJSON as any).features.length < 5 ? "Not enough incidents to compare models (requires at least 5)" : "Compare ML Models"}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+            Compare ML Models
+          </button>
+          <div className="text-[10px] text-slate-400 mt-3 text-center italic">Click map pin to remove</div>
+        </div>
+      )}
       
       {/* Crime Details Modal */}
       {selectedCrime && (

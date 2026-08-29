@@ -3,6 +3,7 @@ from typing import Any
 
 import numpy as np
 import pyproj
+from scipy.spatial import ConvexHull
 from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
 from sklearn.metrics import (
     calinski_harabasz_score,
@@ -14,8 +15,28 @@ from sklearn.metrics import (
 transformer = pyproj.Transformer.from_crs("EPSG:4326", "EPSG:32616", always_xy=True)
 
 
+def calculate_cluster_convex_hull_area(latitudes, longitudes):
+    """
+    Calculates approximate area (in sq km) of a spatial cluster using Convex Hull.
+    """
+    if len(latitudes) < 3:
+        return 0.05  # Default minimal area in km^2
+        
+    points = np.column_stack((latitudes, longitudes))
+    try:
+        hull = ConvexHull(points)
+        # Approximate conversion from degree area to km^2 at lat ~ 41.88
+        mean_lat = np.mean(latitudes)
+        lat_dist_km = 111.13
+        lon_dist_km = 111.13 * np.cos(np.radians(mean_lat))
+        area_sq_km = hull.volume * lat_dist_km * lon_dist_km
+        return max(area_sq_km, 0.05)
+    except Exception:
+        return 0.1
+
+
 def run_clustering(
-    coords: np.ndarray, algorithm: str, params: dict[str, Any]
+    coords: np.ndarray, algorithm: str, params: dict[str, Any], extra_data: list[dict] = None
 ) -> tuple[np.ndarray, np.ndarray, dict[str, float]]:
 
     start_time = time.time()
@@ -161,4 +182,70 @@ def run_clustering(
         "runtimeMs": float(runtime_ms),
     }
 
-    return labels, centroids, metrics
+    # Calculate Hotspot Rankings
+    hotspot_rankings = []
+    unique_labels = set(labels)
+    for c in unique_labels:
+        if c == -1:
+            continue
+        
+        mask = labels == c
+        cluster_points = coords[mask]
+        volume = len(cluster_points)
+        
+        if volume < 5:  # Minimum volume for ranking consideration
+            continue
+            
+        area_km2 = calculate_cluster_convex_hull_area(cluster_points[:, 0], cluster_points[:, 1])
+        density = volume / area_km2
+        intensity_score = volume * np.log1p(density)
+        
+        risk_category = "Critical Hotspot" if density > 500 else ("High Risk" if density > 200 else "Moderate Risk")
+        
+        dominant_crime = "Unknown"
+        peak_hour = "Unknown"
+        peak_day = "Unknown"
+        insight = "Not enough data for insights."
+        
+        if extra_data is not None:
+            cluster_extras = [extra_data[i] for i, m in enumerate(mask) if m]
+            
+            # Dominant crime
+            crimes = {}
+            hours = {}
+            days = {}
+            for e in cluster_extras:
+                ct = e.get("primary_type", "Unknown")
+                hr = e.get("hour", -1)
+                dy = e.get("day_of_week", "Unknown")
+                
+                crimes[ct] = crimes.get(ct, 0) + 1
+                if hr != -1: hours[hr] = hours.get(hr, 0) + 1
+                if dy != "Unknown": days[dy] = days.get(dy, 0) + 1
+                
+            if crimes:
+                dominant_crime = max(crimes.items(), key=lambda x: x[1])[0]
+            if hours:
+                peak_h = max(hours.items(), key=lambda x: x[1])[0]
+                peak_hour = f"{peak_h:02d}:00 - {(peak_h+1)%24:02d}:00"
+            if days:
+                peak_day = max(days.items(), key=lambda x: x[1])[0]
+                
+            insight = f"Historical pattern indicates concentrated {dominant_crime} activity, peaking on {peak_day}s during {peak_hour}."
+
+        hotspot_rankings.append({
+            "cluster_id": int(c),
+            "volume": int(volume),
+            "area_sq_km": float(round(area_km2, 3)),
+            "density_per_km2": float(round(density, 1)),
+            "intensity_score": float(round(intensity_score, 2)),
+            "risk_category": risk_category,
+            "dominant_crime": dominant_crime,
+            "peak_hour": peak_hour,
+            "peak_day": peak_day,
+            "insight": insight
+        })
+        
+    hotspot_rankings = sorted(hotspot_rankings, key=lambda x: x["intensity_score"], reverse=True)
+
+    return labels, centroids, metrics, hotspot_rankings

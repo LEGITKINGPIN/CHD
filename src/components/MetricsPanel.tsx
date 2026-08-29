@@ -65,6 +65,29 @@ export default function MetricsPanel({ result, algorithm }: MetricsPanelProps) {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {result.hotspot_rankings && result.hotspot_rankings.length > 0 && (
+        <div className="mb-2 max-h-48 overflow-y-auto">
+          <h4 className="text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">Top Hotspots by Intensity</h4>
+          <div className="space-y-2">
+            {result.hotspot_rankings.slice(0, 5).map((ranking, idx) => (
+              <div key={ranking.cluster_id} className="bg-slate-50 rounded-lg p-2 border border-slate-100 flex items-center justify-between">
+                 <div>
+                    <div className="text-[10px] font-bold text-slate-700">Cluster {ranking.cluster_id}</div>
+                    <div className="text-xs text-slate-500">Vol: {ranking.volume} | Area: {ranking.area_sq_km} km²</div>
+                 </div>
+                 <div className={`text-xs font-bold px-2 py-1 rounded ${
+                    ranking.risk_category === 'Critical Hotspot' ? 'bg-rose-100 text-rose-700' :
+                    ranking.risk_category === 'High Risk' ? 'bg-orange-100 text-orange-700' :
+                    'bg-yellow-100 text-yellow-700'
+                 }`}>
+                   {ranking.density_per_km2.toFixed(1)} /km²
+                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="mt-4 p-3 bg-blue-50 text-blue-800 rounded-lg text-xs leading-relaxed border border-blue-100">
         <strong className="block mb-1 font-semibold">Evaluation:</strong>

@@ -19,12 +19,20 @@ class CrimeRecordSchema(BaseModel):
     arrest: bool
 
 
+class CustomMarkerParams(BaseModel):
+    lat: float
+    lng: float
+    radiusKm: float
+
+
 class ClusterParams(BaseModel):
     algorithm: str
     params: dict[str, Any]
     filter: list[str] | None = ["ALL"]
     district: list[str] | None = ["ALL"]
+    arrest: list[str] | None = ["ALL"]
     dataset: str = "chicago"
+    customMarker: CustomMarkerParams | None = None
 
 
 class DateRange(BaseModel):
@@ -70,7 +78,21 @@ class MetricsSchema(BaseModel):
     experimentId: str
 
 
+class HotspotRankingSchema(BaseModel):
+    cluster_id: int
+    volume: int
+    area_sq_km: float
+    density_per_km2: float
+    intensity_score: float
+    risk_category: str
+    dominant_crime: str | None = None
+    peak_hour: str | None = None
+    peak_day: str | None = None
+    insight: str | None = None
+
+
 class ClusteringResponse(BaseModel):
     labels: list[int]
     centroids: list[list[float]]
     metrics: MetricsSchema
+    hotspot_rankings: list[HotspotRankingSchema] | None = None

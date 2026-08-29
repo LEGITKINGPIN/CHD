@@ -3,8 +3,8 @@ import { ShieldAlert, Map as MapIcon, BarChart3 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface HeaderProps {
-  activeView: 'map' | 'macro';
-  setActiveView: (view: 'map' | 'macro') => void;
+  activeView: 'map' | 'eda' | 'trends' | 'compare' | 'patrol';
+  setActiveView: (view: 'map' | 'eda' | 'trends' | 'compare' | 'patrol') => void;
 }
 
 export default function Header({ activeView, setActiveView }: HeaderProps) {
@@ -21,30 +21,30 @@ export default function Header({ activeView, setActiveView }: HeaderProps) {
       </div>
       <div className="flex-1 flex justify-center">
         <div className="bg-slate-100 p-1 rounded-lg flex items-center gap-1 border border-slate-200">
-          <button
-            onClick={() => setActiveView('map')}
-            className={clsx(
-              "flex items-center gap-2 px-4 py-1.5 text-sm font-medium rounded-md transition-colors",
-              activeView === 'map' 
-                ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" 
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-            )}
-          >
-            <MapIcon className="w-4 h-4" />
-            Geospatial Mapping
-          </button>
-          <button
-            onClick={() => setActiveView('macro')}
-            className={clsx(
-              "flex items-center gap-2 px-4 py-1.5 text-sm font-medium rounded-md transition-colors",
-              activeView === 'macro' 
-                ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" 
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-            )}
-          >
-            <BarChart3 className="w-4 h-4" />
-            National Insights
-          </button>
+          {[
+            { id: 'map', label: 'Map', icon: MapIcon },
+            { id: 'eda', label: 'EDA', icon: BarChart3 },
+            { id: 'trends', label: 'Trends', icon: BarChart3 },
+            { id: 'compare', label: 'Compare', icon: BarChart3 },
+            { id: 'patrol', label: 'Patrol Intel', icon: ShieldAlert },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveView(tab.id as any)}
+                className={clsx(
+                  "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                  activeView === tab.id 
+                    ? "bg-white text-slate-900 shadow-sm border border-slate-200/60" 
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
