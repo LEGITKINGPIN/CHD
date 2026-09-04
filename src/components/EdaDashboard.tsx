@@ -148,8 +148,10 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
                   <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: 'var(--color-slate-muted)', fontSize: 11, fontWeight: 500}} />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: 'var(--color-slate)', fontSize: 11, fontWeight: 600}} width={120} />
                   <Tooltip 
-                    cursor={{fill: 'var(--color-background)'}}
-                    contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)'}}
+                    cursor={{fill: 'var(--color-surface-soft)'}}
+                    contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.2)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)', color: 'var(--color-navy-deep)'}}
+                    itemStyle={{color: 'var(--color-navy-deep)'}}
+                    labelStyle={{color: 'var(--color-slate-muted)'}}
                   />
                   <Bar dataKey="count" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -182,7 +184,9 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)'}}
+                      contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.2)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)', color: 'var(--color-navy-deep)'}}
+                      itemStyle={{color: 'var(--color-navy-deep)'}}
+                      labelStyle={{color: 'var(--color-slate-muted)'}}
                     />
                   </PieChart>
                 </ResponsiveContainer>

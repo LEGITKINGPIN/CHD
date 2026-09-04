@@ -56,11 +56,18 @@ export default function MetricsPanel({ result, algorithm, onClusterHover, hovere
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <XAxis type="number" hide />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
+              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-slate-muted)' }} />
               <Tooltip 
-                cursor={{ fill: '#f1f5f9' }}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                itemStyle={{ fontSize: '12px' }}
+                cursor={{ fill: 'var(--color-surface-soft)' }}
+                contentStyle={{ 
+                  borderRadius: 'var(--radius-control)', 
+                  border: '1px solid var(--color-border)', 
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.2)',
+                  backgroundColor: 'var(--color-surface)',
+                  color: 'var(--color-navy-deep)'
+                }}
+                itemStyle={{ fontSize: '12px', color: 'var(--color-navy-deep)' }}
+                labelStyle={{ color: 'var(--color-slate-muted)' }}
               />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                 {chartData.map((entry, index) => (
@@ -98,9 +105,9 @@ export default function MetricsPanel({ result, algorithm, onClusterHover, hovere
                     <div className="text-[11px] font-medium text-[var(--color-slate-muted)]">Vol: {ranking.volume} | Area: {ranking.area_sq_km} km²</div>
                  </div>
                  <div className={`text-[11px] font-bold px-2 py-1.5 rounded-[var(--radius-control)] uppercase tracking-wider ${
-                    ranking.risk_category === 'Critical Hotspot' ? 'bg-[var(--color-rose)]/10 text-[var(--color-rose)]' :
-                    ranking.risk_category === 'High Risk' ? 'bg-orange-100 text-orange-700' :
-                    'bg-yellow-100 text-yellow-700'
+                    ranking.risk_category === 'Critical Hotspot' ? 'bg-[var(--color-rose)]/15 text-[var(--color-rose)] border border-[var(--color-rose)]/30' :
+                    ranking.risk_category === 'High Risk' ? 'bg-[var(--color-warning)]/15 text-[var(--color-warning)] border border-[var(--color-warning)]/30' :
+                    'bg-[var(--color-indigo)]/15 text-[var(--color-indigo)] border border-[var(--color-indigo)]/30'
                  }`}>
                    {ranking.density_per_km2.toFixed(1)} /km²
                  </div>

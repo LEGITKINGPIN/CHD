@@ -88,10 +88,10 @@ export default function CompareAlgorithms({
         </header>
 
         {error && error === 'No records match the filter criteria.' ? (
-          <div className="p-8 bg-amber-50 rounded-[var(--radius-panel)] border border-amber-200 text-center space-y-3 flex flex-col items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-400"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
-            <div className="text-amber-800 font-bold text-[16px]">No matching records found</div>
-            <p className="text-amber-600 max-w-md mx-auto text-[13px] font-medium">
+          <div className="p-8 bg-[var(--color-warning)]/10 rounded-[var(--radius-panel)] border border-[var(--color-warning)]/20 text-center space-y-3 flex flex-col items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--color-warning)]"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+            <div className="text-[var(--color-navy-deep)] font-bold text-[16px]">No matching records found</div>
+            <p className="text-[var(--color-slate-muted)] max-w-md mx-auto text-[13px] font-medium">
               The current combination of dataset, filters, and custom area selection yielded zero results. Try broadening your filters or increasing the custom area radius to compare models.
             </p>
           </div>

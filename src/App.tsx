@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { CrimeRecord, ClusteringResult, Metadata, DatasetInfo } from './types';
+import { CrimeRecord, ClusteringResult, Metadata, DatasetInfo, TacticalPatrolRoute } from './types';
 import dynamic from 'next/dynamic';
 
 const MapWorkspace = dynamic(() => import('./components/MapWorkspace'), { ssr: false });
@@ -40,10 +40,57 @@ export default function App() {
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>(['ALL']);
   const [selectedArrest, setSelectedArrest] = useState<string[]>(['ALL']);
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<string>('K-MEANS');
+
+  // Theme State
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('chd-theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      setTheme('light');
+    } else {
+      setTheme('dark');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      if (theme === 'dark') {
+        root.classList.add('dark');
+        root.setAttribute('data-theme', 'dark');
+      } else {
+        root.classList.remove('dark');
+        root.setAttribute('data-theme', 'light');
+      }
+      localStorage.setItem('chd-theme', theme);
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
   
   // ML Results
   const [clusteringResult, setClusteringResult] = useState<ClusteringResult | null>(null);
   const [isClustering, setIsClustering] = useState(false);
+
+  // Tactical Patrol Route
+  const [activePatrolRoute, setActivePatrolRoute] = useState<TacticalPatrolRoute | null>(null);
+
+  const handleDeployPatrolRoute = (route: TacticalPatrolRoute) => {
+    setActivePatrolRoute(route);
+    setActiveView('map');
+    if (route.coordinates.length > 0) {
+      setFocusCoordinate(route.coordinates[0]);
+    }
+  };
+
+  const handleClearPatrolRoute = () => {
+    setActivePatrolRoute(null);
+  };
 
   const selectedDataset = useMemo(() => {
     return datasets.find(d => selectedDatasetKeys.includes(d.key));
@@ -83,6 +130,7 @@ export default function App() {
       
       // Clear all results and incompatible filters
       setClusteringResult(null);
+      setActivePatrolRoute(null);
       
       // Reset filters when switching datasets to avoid applying districts/types that don't exist
       setSelectedTypes(['ALL']);
@@ -218,7 +266,12 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[var(--color-background)]">
-      <Header activeView={activeView} setActiveView={setActiveView} />
+      <Header 
+        activeView={activeView} 
+        setActiveView={setActiveView} 
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
       
       {activeView === 'map' ? (
         <div className="flex flex-1 overflow-hidden relative">
@@ -254,6 +307,10 @@ export default function App() {
             setCustomMarker={setCustomMarker}
             onNavigateCompare={() => setActiveView('compare')}
             focusCoordinate={focusCoordinate}
+            theme={theme}
+            activePatrolRoute={activePatrolRoute}
+            onClearPatrolRoute={handleClearPatrolRoute}
+            onGoToIntel={() => setActiveView('patrol')}
           >
             {clusteringResult && (
               <MetricsPanel result={clusteringResult} algorithm={selectedAlgorithm} />
@@ -297,6 +354,8 @@ export default function App() {
             setActiveView('map');
           }}
           onGoToMap={() => setActiveView('map')}
+          onDeployPatrolRoute={handleDeployPatrolRoute}
+          activePatrolRoute={activePatrolRoute}
         />
       ) : null}
     </div>

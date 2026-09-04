@@ -17,3 +17,4 @@ __pycache__/
 
 # Next.js
 .next/
+tsconfig.tsbuildinfo

@@ -1,15 +1,17 @@
 import React from 'react';
-import { ShieldAlert, Map as MapIcon, BarChart3, Activity, Layers, ActivitySquare } from 'lucide-react';
+import { ShieldAlert, Map as MapIcon, BarChart3, Activity, Layers, Sun, Moon } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface HeaderProps {
   activeView: 'map' | 'eda' | 'trends' | 'compare' | 'patrol';
   setActiveView: (view: 'map' | 'eda' | 'trends' | 'compare' | 'patrol') => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
-export default function Header({ activeView, setActiveView }: HeaderProps) {
+export default function Header({ activeView, setActiveView, theme = 'light', onToggleTheme }: HeaderProps) {
   return (
-    <header className="h-[60px] bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center px-3 md:px-6 shrink-0 shadow-sm z-20 gap-2 md:gap-4">
+    <header className="h-[60px] bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center px-3 md:px-6 shrink-0 shadow-sm z-20 gap-2 md:gap-4 justify-between">
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
         <div className="flex items-center justify-center bg-clip-text text-transparent bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-indigo)]">
           <span className="font-black text-xl md:text-2xl tracking-tighter" style={{ letterSpacing: '-0.05em' }}>CHD</span>
@@ -47,6 +49,21 @@ export default function Header({ activeView, setActiveView }: HeaderProps) {
             );
           })}
         </div>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={onToggleTheme}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-control)] bg-[var(--color-surface-soft)] hover:bg-[var(--color-border)] text-[var(--color-slate)] hover:text-[var(--color-navy-deep)] border border-[var(--color-border)] transition-all duration-200 shadow-sm cursor-pointer"
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-amber-400 transition-transform duration-300 hover:rotate-45" />
+          ) : (
+            <Moon className="w-4 h-4 text-[var(--color-indigo)] transition-transform duration-300 hover:-rotate-12" />
+          )}
+        </button>
       </div>
     </header>
   );

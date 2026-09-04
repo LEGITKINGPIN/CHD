@@ -18,6 +18,10 @@ export interface HotspotRanking {
   density_per_km2: number;
   intensity_score: number;
   risk_category: string;
+  dominant_crime?: string;
+  peak_hour?: string | number;
+  peak_day?: string;
+  insight?: string;
 }
 
 export interface ClusteringResult {
@@ -32,6 +36,31 @@ export interface ClusteringResult {
     runtimeMs: number;
   };
   hotspot_rankings?: HotspotRanking[];
+}
+
+export interface PatrolCheckpoint {
+  order: number;
+  clusterId: number;
+  lat: number;
+  lng: number;
+  riskCategory: string;
+  density: number;
+  volume: number;
+  dominantCrime: string;
+  recommendedUnit: string;
+  peakShift: string;
+  tacticalAction: string;
+}
+
+export interface TacticalPatrolRoute {
+  id: string;
+  title: string;
+  strategy: 'risk-first' | 'shortest-path';
+  checkpoints: PatrolCheckpoint[];
+  coordinates: [number, number][]; // [lng, lat] format for MapLibre GeoJSON
+  totalDistanceKm: number;
+  estimatedDurationMins: number;
+  generatedAt: string;
 }
 
 export interface DateRange {

@@ -28,12 +28,70 @@
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
   --color-critical: #B91C1C;
+  --color-rose: #F43F5E;
+  --color-teal: #0D9488;
 
   --radius-control: 8px;
   --radius-card: 10px;
   --radius-panel: 12px;
 
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root {
+  --color-navy: #17243A;
+  --color-navy-deep: #0F172A;
+
+  --color-slate: #475569;
+  --color-slate-muted: #64748B;
+
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F1F5F9;
+
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+
+  --color-primary: #2563EB;
+  --color-indigo: #4F46E5;
+  --color-blue-soft: #EFF6FF;
+  --color-indigo-soft: #EEF2FF;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-critical: #B91C1C;
+  --color-rose: #F43F5E;
+  --color-teal: #0D9488;
+}
+
+html.dark,
+:root[data-theme="dark"],
+.dark {
+  --color-navy: #E2E8F0;
+  --color-navy-deep: #F8FAFC;
+
+  --color-slate: #94A3B8;
+  --color-slate-muted: #64748B;
+
+  --color-background: #0B0F17;
+  --color-surface: #111827;
+  --color-surface-soft: #1E293B;
+
+  --color-border: #1F2937;
+  --color-border-strong: #374151;
+
+  --color-primary: #3B82F6;
+  --color-indigo: #6366F1;
+  --color-blue-soft: rgba(59, 130, 246, 0.15);
+  --color-indigo-soft: rgba(99, 102, 241, 0.15);
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-critical: #F87171;
+  --color-rose: #FB7185;
+  --color-teal: #2DD4BF;
 }
 
 html, body, #root {
@@ -45,6 +103,7 @@ html, body, #root {
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-slate);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .map-container {
@@ -53,28 +112,81 @@ html, body, #root {
   position: relative;
 }
 
-/* Make MapLibre Popups transparent */
+/* Light MapLibre Popups */
 .maplibregl-popup-content {
-  background: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border-radius: 0.75rem !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
   padding: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--color-border);
 }
 
 .maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
-  border-top-color: rgba(255, 255, 255, 0.85) !important;
+  border-top-color: rgba(255, 255, 255, 0.9) !important;
 }
 .maplibregl-popup-anchor-top .maplibregl-popup-tip {
-  border-bottom-color: rgba(255, 255, 255, 0.85) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.9) !important;
 }
 .maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: rgba(255, 255, 255, 0.85) !important;
+  border-right-color: rgba(255, 255, 255, 0.9) !important;
 }
 .maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: rgba(255, 255, 255, 0.85) !important;
+  border-left-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Dark MapLibre Popups */
+html.dark .maplibregl-popup-content,
+:root[data-theme="dark"] .maplibregl-popup-content,
+.dark .maplibregl-popup-content {
+  background: rgba(17, 24, 39, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 25px -4px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+:root[data-theme="dark"] .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.dark .maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: rgba(17, 24, 39, 0.92) !important;
+}
+html.dark .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+:root[data-theme="dark"] .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.dark .maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: rgba(17, 24, 39, 0.92) !important;
+}
+html.dark .maplibregl-popup-anchor-left .maplibregl-popup-tip,
+:root[data-theme="dark"] .maplibregl-popup-anchor-left .maplibregl-popup-tip,
+.dark .maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: rgba(17, 24, 39, 0.92) !important;
+}
+html.dark .maplibregl-popup-anchor-right .maplibregl-popup-tip,
+:root[data-theme="dark"] .maplibregl-popup-anchor-right .maplibregl-popup-tip,
+.dark .maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: rgba(17, 24, 39, 0.92) !important;
+}
+
+/* MapLibre controls dark adaptation */
+html.dark .maplibregl-ctrl-group,
+:root[data-theme="dark"] .maplibregl-ctrl-group,
+.dark .maplibregl-ctrl-group {
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+}
+html.dark .maplibregl-ctrl-group button,
+:root[data-theme="dark"] .maplibregl-ctrl-group button,
+.dark .maplibregl-ctrl-group button {
+  border-bottom-color: var(--color-border) !important;
+}
+html.dark .maplibregl-ctrl-group button:hover,
+:root[data-theme="dark"] .maplibregl-ctrl-group button:hover,
+.dark .maplibregl-ctrl-group button:hover {
+  background-color: var(--color-surface-soft) !important;
+}
+html.dark .maplibregl-ctrl-icon,
+:root[data-theme="dark"] .maplibregl-ctrl-icon,
+.dark .maplibregl-ctrl-icon {
+  filter: invert(0.85);
 }
 
 /* Custom Scrollbar for sidebars and panels */
