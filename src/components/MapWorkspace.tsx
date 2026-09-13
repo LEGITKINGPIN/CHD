@@ -2,11 +2,12 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Map, Source, Layer, Popup, useMap, Marker } from '@vis.gl/react-maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { CrimeRecord, ClusteringResult, Metadata, TacticalPatrolRoute, PatrolCheckpoint } from '../types';
+import { CrimeRecord, ClusteringResult, Metadata, TacticalPatrolRoute, PatrolCheckpoint, RiskGridCell, LiveDispatchIncident } from '../types';
 import * as turf from '@turf/turf';
-import { Search, Layers, MapPin, Route, Navigation, Car, ChevronRight, ChevronLeft, X, Compass, ShieldAlert, Play, Pause, RotateCcw, Clock, Flame } from 'lucide-react';
+import { Search, Layers, MapPin, Route, Navigation, Car, ChevronRight, ChevronLeft, X, Compass, ShieldAlert, Play, Pause, RotateCcw, Clock, Flame, BrainCircuit, Radio } from 'lucide-react';
 import { clsx } from 'clsx';
 import MetricsPanel from './MetricsPanel';
+import LiveDispatchDrawer from './LiveDispatchDrawer';
 
 interface MapWorkspaceProps {
   crimes: CrimeRecord[];
@@ -19,7 +20,23 @@ interface MapWorkspaceProps {
   theme?: 'light' | 'dark';
   activePatrolRoute?: TacticalPatrolRoute | null;
   onClearPatrolRoute?: () => void;
+  activeRiskGrid?: RiskGridCell[] | null;
+  onClearRiskGrid?: () => void;
   onGoToIntel?: () => void;
+  isLiveDispatchOpen?: boolean;
+  onToggleLiveDispatch?: () => void;
+  liveIncidents?: LiveDispatchIncident[];
+  activeUnits?: number;
+  isLoadingLive?: boolean;
+  onRefreshLive?: () => void;
+  refreshInterval?: number;
+  onSetRefreshInterval?: (sec: number) => void;
+  nextSyncCountdown?: number;
+  onLocateLiveIncident?: (incident: LiveDispatchIncident) => void;
+  trackedIncident?: LiveDispatchIncident | null;
+  onClearTrackedIncident?: () => void;
+  onSyncSocrata?: () => void;
+  isSyncingSocrata?: boolean;
   children?: React.ReactNode;
 }
 
@@ -34,7 +51,23 @@ export default function MapWorkspace({
   theme = 'light',
   activePatrolRoute,
   onClearPatrolRoute,
+  activeRiskGrid,
+  onClearRiskGrid,
   onGoToIntel,
+  isLiveDispatchOpen = false,
+  onToggleLiveDispatch,
+  liveIncidents = [],
+  activeUnits = 42,
+  isLoadingLive = false,
+  onRefreshLive,
+  refreshInterval = 0,
+  onSetRefreshInterval,
+  nextSyncCountdown = 0,
+  onLocateLiveIncident,
+  trackedIncident,
+  onClearTrackedIncident,
+  onSyncSocrata,
+  isSyncingSocrata = false,
   children 
 }: MapWorkspaceProps) {
   const [hoverInfo, setHoverInfo] = useState<{lng: number, lat: number, props: any, type: string} | null>(null);
@@ -44,6 +77,39 @@ export default function MapWorkspace({
   const [hoveredClusterId, setHoveredClusterId] = useState<number | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const mapRef = useRef<any>(null);
+
+  // Supervised Risk Grid State
+  const [showRiskGrid, setShowRiskGrid] = useState(true);
+
+  const riskGridGeoJSON = useMemo(() => {
+    if (!activeRiskGrid || activeRiskGrid.length === 0) return null;
+    const delta = 0.005; // ~1km cell half-width
+    const features = activeRiskGrid.map(cell => {
+      const minX = cell.grid_lng - delta;
+      const maxX = cell.grid_lng + delta;
+      const minY = cell.grid_lat - delta;
+      const maxY = cell.grid_lat + delta;
+      const color = cell.risk_class === 'High Risk' ? '#ef4444' : cell.risk_class === 'Medium Risk' ? '#f59e0b' : '#10b981';
+      return {
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Polygon' as const,
+          coordinates: [[
+            [minX, minY],
+            [maxX, minY],
+            [maxX, maxY],
+            [minX, maxY],
+            [minX, minY]
+          ]]
+        },
+        properties: {
+          ...cell,
+          color,
+        }
+      };
+    });
+    return { type: 'FeatureCollection' as const, features };
+  }, [activeRiskGrid]);
 
   // 24-Hour Time-Lapse Heatmap Player State
   const [isTimeLapseActive, setIsTimeLapseActive] = useState(false);
@@ -260,12 +326,12 @@ export default function MapWorkspace({
       // Handle degenerate bounds safely (single point or empty)
       if (b.minLng === b.maxLng && b.minLat === b.maxLat) {
         if (b.minLng !== undefined && !isNaN(b.minLng)) {
-          map.flyTo({ center: [b.minLng, b.minLat], zoom: 12 });
+          map.flyTo({ center: [b.minLng, b.minLat], zoom: 12, curve: 1.42, speed: 1.1, essential: true });
         }
       } else if (b.minLng !== undefined && !isNaN(b.minLng)) {
         map.fitBounds(
           [[b.minLng, b.minLat], [b.maxLng, b.maxLat]],
-          { padding: 50, duration: 1000 }
+          { padding: 50, duration: 1200, essential: true }
         );
       }
     }
@@ -274,7 +340,7 @@ export default function MapWorkspace({
   useEffect(() => {
     if (focusCoordinate && mapRef.current && isMapLoaded) {
       const map = mapRef.current.getMap();
-      map.flyTo({ center: focusCoordinate, zoom: 15, duration: 1500 });
+      map.flyTo({ center: focusCoordinate, zoom: 15, duration: 1300, curve: 1.42, speed: 1.1, essential: true });
       setSearchQuery(`${focusCoordinate[1].toFixed(4)}, ${focusCoordinate[0].toFixed(4)}`);
       setCustomMarker({
         lng: focusCoordinate[0],
@@ -295,6 +361,16 @@ export default function MapWorkspace({
         setHoverInfo((prev) => {
           if (prev && prev.lng === lng && prev.lat === lat && prev.type === 'native-cluster') return prev;
           return { lng, lat, props: feature.properties, type: 'native-cluster' };
+        });
+        return;
+      }
+
+      if (layerId === 'risk-grid-fill') {
+        setHoverInfo({
+          lng: e.lngLat.lng,
+          lat: e.lngLat.lat,
+          props: feature.properties,
+          type: 'risk-cell'
         });
         return;
       }
@@ -682,8 +758,28 @@ export default function MapWorkspace({
         </form>
       </div>
 
-      {/* Bottom Left Controls: Map Layers & 24h Time-Lapse Player Toggle */}
+      {/* Bottom Left Controls: Map Layers, 24h Time-Lapse & Live CAD Dispatch */}
       <div className="absolute bottom-4 z-10 flex flex-col gap-2 transition-[left] duration-300 ease-in-out max-md:left-4 md:!left-[calc(var(--sidebar-offset,0px)+16px)]">
+        {/* Live CAD Dispatch Launcher Button */}
+        {onToggleLiveDispatch && (
+          <button 
+            onClick={onToggleLiveDispatch}
+            className={clsx(
+              "p-2.5 rounded-full shadow-md border transition-all flex items-center justify-center cursor-pointer relative group",
+              isLiveDispatchOpen 
+                ? "bg-rose-600 text-white border-transparent ring-2 ring-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.35)]" 
+                : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-slate)] hover:bg-[var(--color-surface-soft)] hover:text-rose-500"
+            )}
+            title={isLiveDispatchOpen ? "Close Live CAD Dispatch Feed" : "Open Real-Time CAD Radio Dispatch Feed"}
+          >
+            <Radio className="w-5 h-5" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+            </span>
+          </button>
+        )}
+
         {/* 24h Time-Lapse Player Launcher */}
         <button 
           onClick={() => {
@@ -747,7 +843,7 @@ export default function MapWorkspace({
         initialViewState={initialViewState}
         mapStyle={currentStyle}
         minZoom={3}
-        interactiveLayerIds={['crime-points', 'crime-clusters', 'cluster-count', 'clustered-points-circle', 'cluster-hulls-fill']}
+        interactiveLayerIds={['crime-points', 'crime-clusters', 'cluster-count', 'clustered-points-circle', 'cluster-hulls-fill', 'risk-grid-fill']}
         onMouseMove={onInteractiveHover}
         onClick={onMapClick}
         onMouseLeave={() => setHoverInfo(null)}
@@ -1045,6 +1141,29 @@ export default function MapWorkspace({
           </Marker>
         )}
 
+        {/* Supervised Spatial Risk Grid Layer */}
+        {riskGridGeoJSON && showRiskGrid && (
+          <Source id="risk-grid-source" type="geojson" data={riskGridGeoJSON as any}>
+            <Layer
+              id="risk-grid-fill"
+              type="fill"
+              paint={{
+                'fill-color': ['get', 'color'],
+                'fill-opacity': 0.28,
+              }}
+            />
+            <Layer
+              id="risk-grid-line"
+              type="line"
+              paint={{
+                'line-color': ['get', 'color'],
+                'line-width': 1.5,
+                'line-opacity': 0.75,
+              }}
+            />
+          </Source>
+        )}
+
         {/* Tactical Patrol Route Polyline Layers */}
         {patrolRouteGeoJSON && (
           <Source id="patrol-route-source" type="geojson" data={patrolRouteGeoJSON as any}>
@@ -1180,6 +1299,84 @@ export default function MapWorkspace({
           </Popup>
         )}
 
+        {/* Risk Grid Cell Hover Popup */}
+        {hoverInfo && hoverInfo.type === 'risk-cell' && (
+          <Popup
+            longitude={hoverInfo.lng}
+            latitude={hoverInfo.lat}
+            closeButton={false}
+            closeOnClick={false}
+            anchor="bottom"
+            className="z-50"
+          >
+            <div className="p-2.5 text-xs max-w-[210px] bg-[var(--color-surface)] text-[var(--color-navy-deep)] rounded shadow-md border border-[var(--color-border)]">
+              <div className="font-bold flex items-center gap-1.5 mb-1">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: hoverInfo.props.color }} />
+                <span>Sector {hoverInfo.props.grid_id}</span>
+              </div>
+              <div className="font-bold text-[11px] mb-1.5" style={{ color: hoverInfo.props.color }}>
+                {hoverInfo.props.risk_class} ({(Number(hoverInfo.props.risk_probability) * 100).toFixed(0)}% High-Risk Prob)
+              </div>
+              <div className="text-[10px] text-[var(--color-slate-muted)] space-y-0.5">
+                <div>Historical Crimes: <span className="font-bold text-[var(--color-navy-deep)]">{hoverInfo.props.total_crimes}</span></div>
+                <div>Violent Ratio: {(Number(hoverInfo.props.violent_ratio) * 100).toFixed(0)}%</div>
+                <div>Night Ratio: {(Number(hoverInfo.props.night_ratio) * 100).toFixed(0)}%</div>
+              </div>
+            </div>
+          </Popup>
+        )}
+
+        {/* Tracked Live CAD Incident Pulsing Radar Marker */}
+        {trackedIncident && (
+          <Marker
+            longitude={trackedIncident.lng}
+            latitude={trackedIncident.lat}
+            anchor="center"
+          >
+            <div className="relative flex items-center justify-center cursor-pointer group">
+              <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-rose-500 opacity-60" />
+              <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-rose-400 opacity-75" style={{ animationDelay: '0.3s' }} />
+              <div className="relative z-10 p-2 rounded-full bg-rose-600 text-white shadow-xl border-2 border-white flex items-center justify-center">
+                <Radio className="w-4 h-4 animate-pulse" />
+              </div>
+            </div>
+          </Marker>
+        )}
+
+        {trackedIncident && (
+          <Popup
+            longitude={trackedIncident.lng}
+            latitude={trackedIncident.lat}
+            closeButton={true}
+            closeOnClick={false}
+            onClose={onClearTrackedIncident}
+            anchor="bottom"
+            offset={25}
+            className="z-50"
+          >
+            <div className="p-3 text-[12px] max-w-[240px] bg-[var(--color-surface)] text-[var(--color-navy-deep)] rounded-[var(--radius-panel)] border border-rose-500/40 shadow-xl">
+              <div className="flex items-center justify-between border-b pb-1.5 mb-1.5 border-[var(--color-border)]">
+                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                  {trackedIncident.severity}
+                </span>
+                <span className="text-[10px] font-mono text-[var(--color-slate-muted)]">
+                  {trackedIncident.id}
+                </span>
+              </div>
+              <h4 className="font-black text-[12px] text-[var(--color-navy-deep)] mb-1">
+                {trackedIncident.primary_type}
+              </h4>
+              <p className="text-[11px] text-[var(--color-slate)] leading-relaxed mb-1.5">
+                {trackedIncident.description}
+              </p>
+              <div className="text-[10px] text-[var(--color-slate-muted)] pt-1.5 border-t border-[var(--color-border)] flex justify-between">
+                <span>{trackedIncident.district}</span>
+                <span className="font-bold text-amber-500">{trackedIncident.status}</span>
+              </div>
+            </div>
+          </Popup>
+        )}
+
       </Map>
 
       {/* Floating Tactical Patrol HUD Bar (Adjusts vertically if Time-Lapse is active) */}
@@ -1231,6 +1428,59 @@ export default function MapWorkspace({
               <button
                 onClick={onClearPatrolRoute}
                 title="Clear Active Patrol Route"
+                className="p-1.5 text-[var(--color-slate-muted)] hover:text-[var(--color-rose)] hover:bg-[var(--color-rose)]/10 rounded-[var(--radius-control)] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Floating Supervised Risk Grid HUD Bar */}
+      {activeRiskGrid && activeRiskGrid.length > 0 && (
+        <div className={clsx(
+          "absolute left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 md:gap-3 bg-[var(--color-surface)]/95 backdrop-blur-md px-4 py-2.5 rounded-[var(--radius-panel)] shadow-xl border border-[var(--color-border)] max-w-[calc(100vw-32px)] overflow-x-auto custom-scrollbar transition-all duration-300",
+          isTimeLapseActive 
+            ? (activePatrolRoute ? "bottom-[235px]" : "bottom-[175px]") 
+            : (activePatrolRoute ? "bottom-20" : "bottom-5")
+        )}>
+          <div className="flex items-center gap-2.5 shrink-0 border-r border-[var(--color-border)] pr-3">
+            <span className="p-1.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-md shadow-sm">
+              <BrainCircuit className="w-4 h-4" />
+            </span>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-black text-indigo-500 tracking-widest uppercase">
+                  Supervised Risk Grid
+                </span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-500 border border-indigo-500/20">
+                  RF Forecast
+                </span>
+              </div>
+              <div className="text-[12px] font-bold text-[var(--color-navy-deep)] whitespace-nowrap">
+                {activeRiskGrid.length} Spatial Sectors (1 km² Grid)
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setShowRiskGrid(!showRiskGrid)}
+              className={clsx(
+                "px-2.5 py-1.5 text-[11px] font-bold rounded-[var(--radius-control)] border transition-colors cursor-pointer",
+                showRiskGrid 
+                  ? "bg-indigo-500/10 text-indigo-500 border-indigo-500/30" 
+                  : "bg-[var(--color-surface-soft)] text-[var(--color-slate-muted)] border-[var(--color-border)]"
+              )}
+            >
+              Layer: {showRiskGrid ? 'VISIBLE' : 'HIDDEN'}
+            </button>
+
+            {onClearRiskGrid && (
+              <button
+                onClick={onClearRiskGrid}
+                title="Clear Risk Grid Overlay"
                 className="p-1.5 text-[var(--color-slate-muted)] hover:text-[var(--color-rose)] hover:bg-[var(--color-rose)]/10 rounded-[var(--radius-control)] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -1667,6 +1917,22 @@ export default function MapWorkspace({
           </div>
         </div>
       )}
+
+      {/* CAD Live Dispatch Drawer */}
+      <LiveDispatchDrawer
+        isOpen={isLiveDispatchOpen}
+        onClose={onToggleLiveDispatch || (() => {})}
+        incidents={liveIncidents}
+        activeUnits={activeUnits}
+        isLoading={isLoadingLive}
+        onRefresh={onRefreshLive || (() => {})}
+        refreshInterval={refreshInterval}
+        onSetRefreshInterval={onSetRefreshInterval || (() => {})}
+        nextSyncCountdown={nextSyncCountdown}
+        onLocateIncident={onLocateLiveIncident || (() => {})}
+        onSyncSocrata={onSyncSocrata}
+        isSyncingSocrata={isSyncingSocrata}
+      />
     </div>
   );
 }

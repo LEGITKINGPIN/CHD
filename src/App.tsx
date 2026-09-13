@@ -4,8 +4,9 @@
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { CrimeRecord, ClusteringResult, Metadata, DatasetInfo, TacticalPatrolRoute } from './types';
+import { CrimeRecord, ClusteringResult, Metadata, DatasetInfo, TacticalPatrolRoute, RiskGridCell, LiveDispatchIncident, RiskPredictionResult } from './types';
 import dynamic from 'next/dynamic';
+import { motion, AnimatePresence } from 'motion/react';
 
 const MapWorkspace = dynamic(() => import('./components/MapWorkspace'), { ssr: false });
 
@@ -16,6 +17,9 @@ import MacroDashboard from './components/MacroDashboard';
 import EdaDashboard from './components/EdaDashboard';
 import CompareAlgorithms from './components/CompareAlgorithms';
 import PatrolIntelligence from './components/PatrolIntelligence';
+import RiskDashboard from './components/RiskDashboard';
+import LiveAlertToast from './components/LiveAlertToast';
+import ExecutiveBriefingModal from './components/ExecutiveBriefingModal';
 
 const API_BASE_URL = '/api';
 
@@ -27,7 +31,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   
   // Navigation State
-  const [activeView, setActiveView] = useState<'map' | 'eda' | 'trends' | 'compare' | 'patrol'>('map');
+  const [activeView, setActiveView] = useState<'map' | 'eda' | 'trends' | 'compare' | 'patrol' | 'risk'>('map');
   
   // Custom Area Marker
   const [customMarker, setCustomMarker] = useState<{lng: number, lat: number, radiusKm: number} | null>(null);
@@ -80,6 +84,9 @@ export default function App() {
   // Tactical Patrol Route
   const [activePatrolRoute, setActivePatrolRoute] = useState<TacticalPatrolRoute | null>(null);
 
+  // Supervised Risk Grid
+  const [activeRiskGrid, setActiveRiskGrid] = useState<RiskGridCell[] | null>(null);
+
   const handleDeployPatrolRoute = (route: TacticalPatrolRoute) => {
     setActivePatrolRoute(route);
     setActiveView('map');
@@ -90,6 +97,130 @@ export default function App() {
 
   const handleClearPatrolRoute = () => {
     setActivePatrolRoute(null);
+  };
+
+  const handleDeployRiskGrid = (cells: RiskGridCell[]) => {
+    setActiveRiskGrid(cells);
+    setActiveView('map');
+    if (cells.length > 0) {
+      setFocusCoordinate([cells[0].grid_lng, cells[0].grid_lat]);
+    }
+  };
+
+  const handleClearRiskGrid = () => {
+    setActiveRiskGrid(null);
+  };
+
+  // Option C: Live CAD Dispatch & Real-Time Intelligence
+  const [isLiveDispatchOpen, setIsLiveDispatchOpen] = useState(false);
+  const [liveIncidents, setLiveIncidents] = useState<LiveDispatchIncident[]>([]);
+  const [activeUnits, setActiveUnits] = useState(42);
+  const [isLoadingLive, setIsLoadingLive] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState<number>(15); // Default 15s streaming
+  const [nextSyncCountdown, setNextSyncCountdown] = useState<number>(15);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
+  const [activeLiveAlert, setActiveLiveAlert] = useState<LiveDispatchIncident | null>(null);
+  const [trackedIncident, setTrackedIncident] = useState<LiveDispatchIncident | null>(null);
+  const [isBriefingModalOpen, setIsBriefingModalOpen] = useState(false);
+  const [isSyncingSocrata, setIsSyncingSocrata] = useState(false);
+  const [cachedRiskPrediction, setCachedRiskPrediction] = useState<RiskPredictionResult | null>(null);
+  const knownIncidentIdsRef = React.useRef<Set<string>>(new Set());
+
+  const playAlertChime = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(780, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1180, ctx.currentTime + 0.18);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.35);
+    } catch (e) {}
+  };
+
+  const fetchLiveStream = async () => {
+    setIsLoadingLive(true);
+    try {
+      const currentDatasetKey = selectedDatasetKeys[0] || 'chicago';
+      const res = await fetch(`${API_BASE_URL}/live/stream?dataset=${currentDatasetKey}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.incidents) {
+        setLiveIncidents(data.incidents);
+        setActiveUnits(data.active_units || 42);
+
+        // Detect new critical/high incoming alerts
+        const newlyReceived = data.incidents.filter((inc: LiveDispatchIncident) => 
+          !knownIncidentIdsRef.current.has(inc.id) && (inc.severity === 'CRITICAL' || inc.severity === 'HIGH')
+        );
+
+        if (newlyReceived.length > 0) {
+          setActiveLiveAlert(newlyReceived[0]);
+          if (soundEnabled) {
+            playAlertChime();
+          }
+        }
+
+        data.incidents.forEach((inc: LiveDispatchIncident) => knownIncidentIdsRef.current.add(inc.id));
+      }
+    } catch (err) {
+      console.error("Failed to fetch live stream", err);
+    } finally {
+      setIsLoadingLive(false);
+      setNextSyncCountdown(refreshInterval || 15);
+    }
+  };
+
+  // Initial fetch on dataset change
+  useEffect(() => {
+    fetchLiveStream();
+  }, [selectedDatasetKeys]);
+
+  // Polling ticker effect
+  useEffect(() => {
+    if (refreshInterval <= 0) return;
+
+    const timer = setInterval(() => {
+      setNextSyncCountdown(prev => {
+        if (prev <= 1) {
+          fetchLiveStream();
+          return refreshInterval;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [refreshInterval, selectedDatasetKeys, soundEnabled]);
+
+  const handleSyncSocrata = async () => {
+    setIsSyncingSocrata(true);
+    try {
+      await handleLiveFetch("https://data.cityofchicago.org/resource/ijzp-q8t2.json", 2000);
+      alert("Successfully ingested live data from Chicago Police Open Data Portal!");
+    } catch (err: any) {
+      alert(`Socrata sync failed: ${err.message}`);
+    } finally {
+      setIsSyncingSocrata(false);
+    }
+  };
+
+  const handleLocateLiveIncident = (incident: LiveDispatchIncident) => {
+    setTrackedIncident(incident);
+    setActiveView('map');
+    setFocusCoordinate([incident.lng, incident.lat]);
+  };
+
+  const handleClearTrackedIncident = () => {
+    setTrackedIncident(null);
   };
 
   const selectedDataset = useMemo(() => {
@@ -271,93 +402,202 @@ export default function App() {
         setActiveView={setActiveView} 
         theme={theme}
         onToggleTheme={toggleTheme}
+        onOpenBriefing={() => setIsBriefingModalOpen(true)}
       />
       
-      {activeView === 'map' ? (
-        <div className="flex flex-1 overflow-hidden relative">
-          <Sidebar 
-            datasets={datasets}
-          selectedDatasetKeys={selectedDatasetKeys}
-          onDatasetChange={fetchData}
-          metadata={metadata} 
-          selectedTypes={selectedTypes}
-          setSelectedTypes={setSelectedTypes}
-          selectedAlgorithm={selectedAlgorithm}
-          setSelectedAlgorithm={setSelectedAlgorithm}
-          onRunClustering={runClustering}
-          onResetClustering={() => setClusteringResult(null)}
-          isClustering={isClustering}
-          hasClusteringResult={clusteringResult !== null}
-          crimeTypes={Array.from(new Set(crimes.map(c => c.primary_type)))}
-          selectedDistricts={selectedDistricts}
-          setSelectedDistricts={setSelectedDistricts}
-          selectedArrest={selectedArrest}
-          setSelectedArrest={setSelectedArrest}
-          districts={(Array.from(new Set(crimes.map(c => c.district))) as string[]).sort()}
-          isLoadingDataset={loading}
-          onUpload={handleUpload}
-          onLiveFetch={handleLiveFetch}
-        />
-        <main className="flex-1 relative">
-          <MapWorkspace 
-            crimes={filteredCrimes} 
-            clusteringResult={clusteringResult}
-            metadata={metadata}
-            customMarker={customMarker}
-            setCustomMarker={setCustomMarker}
-            onNavigateCompare={() => setActiveView('compare')}
-            focusCoordinate={focusCoordinate}
-            theme={theme}
-            activePatrolRoute={activePatrolRoute}
-            onClearPatrolRoute={handleClearPatrolRoute}
-            onGoToIntel={() => setActiveView('patrol')}
-          >
-            {clusteringResult && (
-              <MetricsPanel result={clusteringResult} algorithm={selectedAlgorithm} />
-            )}
-          </MapWorkspace>
-        </main>
-        </div>
-      ) : activeView === 'trends' ? (
-        <MacroDashboard 
-          selectedDatasetKeys={selectedDatasetKeys} 
-          selectedTypes={selectedTypes} 
-          selectedDistricts={selectedDistricts} 
-          selectedArrest={selectedArrest}
-        />
-      ) : activeView === 'eda' ? (
-        <EdaDashboard 
-          selectedDatasetKeys={selectedDatasetKeys} 
-          selectedTypes={selectedTypes} 
-          selectedDistricts={selectedDistricts} 
-          selectedArrest={selectedArrest}
-        />
-      ) : activeView === 'compare' ? (
-        <CompareAlgorithms 
-          selectedDatasetKeys={selectedDatasetKeys} 
-          selectedTypes={selectedTypes} 
-          selectedDistricts={selectedDistricts}
-          selectedArrest={selectedArrest}
-          customMarker={customMarker}
-          onVisualizeAlgorithm={(algo) => {
-            setSelectedAlgorithm(algo);
-            setActiveView('map');
-            runClustering(algo, algo === 'DBSCAN' ? {eps: 1.0, minPts: 10} : {k: 5}); // Rerun with defaults to visualize
-          }}
-        />
-      ) : activeView === 'patrol' ? (
-        <PatrolIntelligence 
-          clusteringResult={clusteringResult} 
-          algorithm={selectedAlgorithm} 
-          onLocateHotspot={(lng, lat) => {
-            setFocusCoordinate([lng, lat]);
-            setActiveView('map');
-          }}
-          onGoToMap={() => setActiveView('map')}
-          onDeployPatrolRoute={handleDeployPatrolRoute}
-          activePatrolRoute={activePatrolRoute}
-        />
-      ) : null}
+      <div className="flex-1 flex overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          {activeView === 'map' ? (
+            <motion.div 
+              key="view-map"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-1 overflow-hidden relative w-full h-full"
+            >
+              <Sidebar 
+                datasets={datasets}
+                selectedDatasetKeys={selectedDatasetKeys}
+                onDatasetChange={fetchData}
+                metadata={metadata} 
+                selectedTypes={selectedTypes}
+                setSelectedTypes={setSelectedTypes}
+                selectedAlgorithm={selectedAlgorithm}
+                setSelectedAlgorithm={setSelectedAlgorithm}
+                onRunClustering={runClustering}
+                onResetClustering={() => setClusteringResult(null)}
+                isClustering={isClustering}
+                hasClusteringResult={clusteringResult !== null}
+                crimeTypes={Array.from(new Set(crimes.map(c => c.primary_type)))}
+                selectedDistricts={selectedDistricts}
+                setSelectedDistricts={setSelectedDistricts}
+                selectedArrest={selectedArrest}
+                setSelectedArrest={setSelectedArrest}
+                districts={(Array.from(new Set(crimes.map(c => c.district))) as string[]).sort()}
+                isLoadingDataset={loading}
+                onUpload={handleUpload}
+                onLiveFetch={handleLiveFetch}
+              />
+              <main className="flex-1 relative">
+                <MapWorkspace 
+                  crimes={filteredCrimes} 
+                  clusteringResult={clusteringResult}
+                  metadata={metadata}
+                  customMarker={customMarker}
+                  setCustomMarker={setCustomMarker}
+                  onNavigateCompare={() => setActiveView('compare')}
+                  focusCoordinate={focusCoordinate}
+                  theme={theme}
+                  activePatrolRoute={activePatrolRoute}
+                  onClearPatrolRoute={handleClearPatrolRoute}
+                  activeRiskGrid={activeRiskGrid}
+                  onClearRiskGrid={handleClearRiskGrid}
+                  onGoToIntel={() => setActiveView('patrol')}
+                  isLiveDispatchOpen={isLiveDispatchOpen}
+                  onToggleLiveDispatch={() => setIsLiveDispatchOpen(prev => !prev)}
+                  liveIncidents={liveIncidents}
+                  activeUnits={activeUnits}
+                  isLoadingLive={isLoadingLive}
+                  onRefreshLive={fetchLiveStream}
+                  refreshInterval={refreshInterval}
+                  onSetRefreshInterval={setRefreshInterval}
+                  nextSyncCountdown={nextSyncCountdown}
+                  onLocateLiveIncident={handleLocateLiveIncident}
+                  trackedIncident={trackedIncident}
+                  onClearTrackedIncident={handleClearTrackedIncident}
+                  onSyncSocrata={handleSyncSocrata}
+                  isSyncingSocrata={isSyncingSocrata}
+                >
+                  {clusteringResult && (
+                    <MetricsPanel result={clusteringResult} algorithm={selectedAlgorithm} />
+                  )}
+                </MapWorkspace>
+              </main>
+            </motion.div>
+          ) : activeView === 'trends' ? (
+            <motion.div
+              key="view-trends"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 flex overflow-hidden w-full h-full"
+            >
+              <MacroDashboard 
+                selectedDatasetKeys={selectedDatasetKeys} 
+                selectedTypes={selectedTypes} 
+                selectedDistricts={selectedDistricts} 
+                selectedArrest={selectedArrest}
+              />
+            </motion.div>
+          ) : activeView === 'eda' ? (
+            <motion.div
+              key="view-eda"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 flex overflow-hidden w-full h-full"
+            >
+              <EdaDashboard 
+                selectedDatasetKeys={selectedDatasetKeys} 
+                selectedTypes={selectedTypes} 
+                selectedDistricts={selectedDistricts} 
+                selectedArrest={selectedArrest}
+              />
+            </motion.div>
+          ) : activeView === 'compare' ? (
+            <motion.div
+              key="view-compare"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 flex overflow-hidden w-full h-full"
+            >
+              <CompareAlgorithms 
+                selectedDatasetKeys={selectedDatasetKeys} 
+                selectedTypes={selectedTypes} 
+                selectedDistricts={selectedDistricts} 
+                selectedArrest={selectedArrest}
+                customMarker={customMarker}
+                onVisualizeAlgorithm={(algo) => {
+                  setSelectedAlgorithm(algo);
+                  setActiveView('map');
+                  runClustering(algo, algo === 'DBSCAN' ? {eps: 1.0, minPts: 10} : {k: 5});
+                }}
+              />
+            </motion.div>
+          ) : activeView === 'patrol' ? (
+            <motion.div
+              key="view-patrol"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 flex overflow-hidden w-full h-full"
+            >
+              <PatrolIntelligence 
+                clusteringResult={clusteringResult} 
+                algorithm={selectedAlgorithm} 
+                onLocateHotspot={(lng, lat) => {
+                  setFocusCoordinate([lng, lat]);
+                  setActiveView('map');
+                }}
+                onGoToMap={() => setActiveView('map')}
+                onDeployPatrolRoute={handleDeployPatrolRoute}
+                activePatrolRoute={activePatrolRoute}
+              />
+            </motion.div>
+          ) : activeView === 'risk' ? (
+            <motion.div
+              key="view-risk"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 flex overflow-hidden w-full h-full"
+            >
+              <RiskDashboard
+                selectedDatasetKeys={selectedDatasetKeys}
+                onDeployRiskGrid={handleDeployRiskGrid}
+                onLocateSector={(lng, lat) => {
+                  setFocusCoordinate([lng, lat]);
+                  setActiveView('map');
+                }}
+                onGoToMap={() => setActiveView('map')}
+                activeRiskGrid={activeRiskGrid}
+                onPredictionsLoaded={(res) => setCachedRiskPrediction(res)}
+              />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+
+      {/* Live Alert Toast for incoming critical incidents */}
+      <LiveAlertToast
+        alert={activeLiveAlert}
+        onDismiss={() => setActiveLiveAlert(null)}
+        onLocate={(incident) => {
+          handleLocateLiveIncident(incident);
+          setActiveLiveAlert(null);
+        }}
+        soundEnabled={soundEnabled}
+        onToggleSound={() => setSoundEnabled(prev => !prev)}
+      />
+
+      {/* Executive Briefing Dossier Modal (Print/PDF) */}
+      <ExecutiveBriefingModal
+        isOpen={isBriefingModalOpen}
+        onClose={() => setIsBriefingModalOpen(false)}
+        datasetName={selectedDataset?.display_name || 'Chicago Crime Sample'}
+        totalCrimes={crimes.length}
+        clusteringResult={clusteringResult}
+        algorithm={selectedAlgorithm}
+        riskPrediction={cachedRiskPrediction}
+        recentDispatches={liveIncidents}
+      />
     </div>
   );
 }

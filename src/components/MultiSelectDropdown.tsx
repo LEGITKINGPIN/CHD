@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, Check } from 'lucide-react';
 
 interface MultiSelectDropdownProps {
   options: { value: string; label: string }[];
@@ -65,30 +66,40 @@ export default function MultiSelectDropdown({
     <div className="relative w-full text-[13px]" ref={containerRef}>
       <button
         type="button"
-        className={`w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-1.5 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none text-left flex justify-between items-center ${disabled ? 'opacity-50 cursor-not-allowed bg-[var(--color-background)] text-[var(--color-slate-muted)]' : 'cursor-pointer hover:bg-[var(--color-surface-soft)] shadow-sm'}`}
+        className={`w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-1.5 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none text-left flex justify-between items-center transition-all duration-200 ${disabled ? 'opacity-50 cursor-not-allowed bg-[var(--color-background)] text-[var(--color-slate-muted)]' : 'cursor-pointer hover:bg-[var(--color-surface-soft)] hover:border-[var(--color-border-strong)] shadow-xs'}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
       >
         <span className="truncate pr-2 font-medium text-[var(--color-navy-deep)]">{getDisplayText()}</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-slate)] shrink-0"><path d="m6 9 6 6 6-6"/></svg>
+        <ChevronDown 
+          className={`w-4 h-4 text-[var(--color-slate)] shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--color-primary)]' : ''}`} 
+        />
       </button>
 
       {isOpen && (
-        <div className="absolute z-[100] mt-1 w-full bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto py-1">
-          {options.map(option => (
-            <label
-              key={option.value}
-              className={`flex items-center px-3 py-1.5 hover:bg-[var(--color-surface-soft)] cursor-pointer transition-colors ${selectedValues.includes(option.value) ? 'bg-[var(--color-indigo-soft)]' : ''}`}
-            >
-              <input
-                type="checkbox"
-                className="rounded-[4px] border-[var(--color-border-strong)] text-[var(--color-primary)] focus:ring-[var(--color-primary)] bg-[var(--color-surface)] mr-2.5 w-4 h-4 cursor-pointer"
-                checked={selectedValues.includes(option.value)}
-                onChange={() => handleToggle(option.value)}
-              />
-              <span className={`text-[13px] truncate ${selectedValues.includes(option.value) ? 'text-[var(--color-primary)] font-semibold' : 'text-[var(--color-slate)] font-medium'}`} title={option.label}>{option.label}</span>
-            </label>
-          ))}
+        <div className="absolute z-[100] mt-1.5 w-full bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] rounded-[var(--radius-control)] shadow-xl max-h-60 overflow-y-auto py-1 custom-scrollbar animate-in fade-in zoom-in-95 duration-150">
+          {options.map(option => {
+            const isSelected = selectedValues.includes(option.value);
+            return (
+              <label
+                key={option.value}
+                className={`flex items-center px-3 py-2 hover:bg-[var(--color-surface-soft)] cursor-pointer transition-colors duration-150 select-none ${isSelected ? 'bg-[var(--color-indigo-soft)]' : ''}`}
+              >
+                <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center mr-2.5 shrink-0 transition-colors duration-150 ${isSelected ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white' : 'border-[var(--color-border-strong)] bg-[var(--color-surface)]'}`}>
+                  {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                </div>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={isSelected}
+                  onChange={() => handleToggle(option.value)}
+                />
+                <span className={`text-[13px] truncate ${isSelected ? 'text-[var(--color-primary)] font-semibold' : 'text-[var(--color-slate)] font-medium'}`} title={option.label}>
+                  {option.label}
+                </span>
+              </label>
+            );
+          })}
         </div>
       )}
     </div>

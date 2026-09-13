@@ -59,12 +59,12 @@ export default function CompareAlgorithms({
   }, [selectedDatasetKeys, selectedTypes, selectedDistricts, selectedArrest, customMarker]);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-4 md:p-8">
+    <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--color-background)] p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
         
-        <header className="mb-4 md:mb-8 flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4">
+        <header className="mb-4 md:mb-6 flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4">
           <div>
-            <h2 className="text-[24px] font-bold text-[var(--color-navy-deep)] flex items-center gap-3 tracking-tight">
+            <h2 className="text-[24px] font-black text-[var(--color-navy-deep)] flex items-center gap-3 tracking-tight">
               Algorithm Comparison
               {customMarker && (
                 <span className="text-[11px] font-bold px-2.5 py-1 bg-[var(--color-rose)]/10 text-[var(--color-rose)] rounded-full border border-[var(--color-rose)]/20 uppercase tracking-wider">
@@ -72,12 +72,12 @@ export default function CompareAlgorithms({
                 </span>
               )}
             </h2>
-            <p className="text-[14px] text-[var(--color-slate-muted)] mt-1">Run multiple clustering algorithms concurrently to evaluate their relative performance on the current dataset.</p>
+            <p className="text-[14px] text-[var(--color-slate-muted)] mt-1 font-medium">Run multiple clustering algorithms concurrently to evaluate their relative performance on the current dataset.</p>
           </div>
           <button
             onClick={runComparison}
             disabled={loading || selectedDatasetKeys.length === 0}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 disabled:opacity-50 text-[var(--color-surface)] text-[13px] font-semibold rounded-[var(--radius-control)] transition-colors shadow-sm min-h-[44px]"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 md:py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 active:scale-98 disabled:opacity-50 text-[var(--color-surface)] text-[13px] font-semibold rounded-[var(--radius-control)] transition-all duration-200 shadow-xs cursor-pointer min-h-[44px]"
           >
             {loading ? (
               <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> Computing...</span>
@@ -103,7 +103,7 @@ export default function CompareAlgorithms({
 
         {results.length > 0 ? (
           <div className="space-y-4 md:space-y-6">
-            <div className="bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-x-auto custom-scrollbar w-full">
+            <div className="bg-[var(--color-surface)] rounded-[var(--radius-panel)] shadow-xs border border-[var(--color-border)] overflow-x-auto custom-scrollbar w-full smooth-card">
               <table className="w-full text-left min-w-[700px]">
                 <thead className="bg-[var(--color-background)] border-b border-[var(--color-border)] text-[var(--color-slate-muted)] text-[11px] font-bold uppercase tracking-widest">
                   <tr>
@@ -119,7 +119,7 @@ export default function CompareAlgorithms({
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)]">
                   {results.map((res, i) => (
-                    <tr key={i} className="hover:bg-[var(--color-surface-soft)] transition-colors">
+                    <tr key={i} className="hover:bg-[var(--color-surface-soft)] transition-colors duration-150">
                       <td className="px-6 py-4 font-bold text-[14px] text-[var(--color-navy-deep)]">{res.algorithm}</td>
                       <td className="px-6 py-4">
                         {res.status === 'success' ? (
@@ -155,7 +155,7 @@ export default function CompareAlgorithms({
                         <button 
                           onClick={() => onVisualizeAlgorithm && onVisualizeAlgorithm(res.algorithm)}
                           disabled={res.status !== 'success'}
-                          className="px-4 py-1.5 text-[11px] font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-[var(--radius-control)] disabled:opacity-50 transition-colors uppercase tracking-wider"
+                          className="px-4 py-1.5 text-[11px] font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-[var(--radius-control)] disabled:opacity-50 transition-colors uppercase tracking-wider cursor-pointer"
                         >
                           View Map
                         </button>
@@ -167,7 +167,7 @@ export default function CompareAlgorithms({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+              <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs smooth-card">
                 <h3 className="font-bold text-[14px] text-[var(--color-navy-deep)] mb-3 flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-[var(--color-primary)]"/> How to interpret these metrics?
                 </h3>
@@ -177,7 +177,7 @@ export default function CompareAlgorithms({
                   <li><strong>N/A Values:</strong> Geometric metrics are mathematically undefined for algorithms that produce only a single cluster or consider all points as noise.</li>
                 </ul>
               </div>
-              <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+              <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs smooth-card">
                 <h3 className="font-bold text-[14px] text-[var(--color-navy-deep)] mb-3 flex items-center gap-2">
                   <Database className="w-4 h-4 text-[var(--color-teal)]"/> Scientific Integrity
                 </h3>

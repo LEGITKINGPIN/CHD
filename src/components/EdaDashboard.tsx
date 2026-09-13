@@ -50,8 +50,9 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[var(--color-background)]">
-        <div className="text-[var(--color-slate)] font-semibold animate-pulse tracking-wide text-sm uppercase">Computing Exploratory Data Analysis...</div>
+      <div className="flex-1 flex flex-col items-center justify-center bg-[var(--color-background)] gap-3">
+        <div className="w-9 h-9 border-3 border-[var(--color-primary)]/30 border-t-[var(--color-primary)] rounded-full animate-spin" />
+        <div className="text-[var(--color-slate)] font-bold tracking-wider text-xs uppercase animate-pulse">Computing Exploratory Data Analysis...</div>
       </div>
     );
   }
@@ -75,17 +76,17 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
     .map(([name, count]) => ({ name, count }));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--color-background)] p-4 md:p-8">
+    <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--color-background)] p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         
-        <header className="mb-8">
-          <h2 className="text-[24px] font-bold text-[var(--color-navy-deep)] tracking-tight">Exploratory Data Analysis</h2>
-          <p className="text-[14px] text-[var(--color-slate-muted)] mt-1">Distribution, categorical trends, and data quality metrics for the current filtered selection.</p>
+        <header className="mb-6">
+          <h2 className="text-[24px] font-black text-[var(--color-navy-deep)] tracking-tight">Exploratory Data Analysis</h2>
+          <p className="text-[14px] text-[var(--color-slate-muted)] mt-1 font-medium">Distribution, categorical trends, and data quality metrics for the current filtered selection.</p>
         </header>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs smooth-card">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-[var(--color-primary)]/10 rounded-[var(--radius-control)] text-[var(--color-primary)]">
                 <FileText className="w-5 h-5" />
@@ -96,7 +97,7 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
             <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Filtered valid records</p>
           </div>
           
-          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs smooth-card">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-[var(--color-rose)]/10 rounded-[var(--radius-control)] text-[var(--color-rose)]">
                 <AlertTriangle className="w-5 h-5" />
@@ -107,7 +108,7 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
             <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Most frequent category</p>
           </div>
 
-          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs smooth-card">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-[var(--color-indigo)]/10 rounded-[var(--radius-control)] text-[var(--color-indigo)]">
                 <Clock className="w-5 h-5" />
@@ -120,7 +121,7 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
             <p className="text-[11px] font-medium text-[var(--color-slate-muted)] mt-2">Highest frequency window</p>
           </div>
 
-          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-sm">
+          <div className="bg-[var(--color-surface)] p-4 md:p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs smooth-card">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-[var(--color-teal)]/10 rounded-[var(--radius-control)] text-[var(--color-teal)]">
                 <MapIcon className="w-5 h-5" />
@@ -138,7 +139,7 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Crime Types Chart */}
-          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
+          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-xs border border-[var(--color-border)] overflow-hidden smooth-card">
             <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Top Crime Categories</h3>
             <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4 md:mb-6">Distribution of incidents by primary type (Top 10)</p>
             <div className="h-72 md:h-80 w-full overflow-hidden">
@@ -149,18 +150,18 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: 'var(--color-slate)', fontSize: 11, fontWeight: 600}} width={120} />
                   <Tooltip 
                     cursor={{fill: 'var(--color-surface-soft)'}}
-                    contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.2)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)', color: 'var(--color-navy-deep)'}}
+                    contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)', color: 'var(--color-navy-deep)'}}
                     itemStyle={{color: 'var(--color-navy-deep)'}}
                     labelStyle={{color: 'var(--color-slate-muted)'}}
                   />
-                  <Bar dataKey="count" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill="var(--color-primary)" radius={[0, 4, 4, 0]} isAnimationActive={true} animationDuration={700} animationEasing="ease-out" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* District Chart */}
-          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-sm border border-[var(--color-border)] overflow-hidden">
+          <div className="bg-[var(--color-surface)] p-4 md:p-6 rounded-[var(--radius-panel)] shadow-xs border border-[var(--color-border)] overflow-hidden smooth-card">
             <h3 className="text-[16px] font-bold text-[var(--color-navy-deep)] mb-1">Geographic Distribution</h3>
             <p className="text-[12px] font-medium text-[var(--color-slate-muted)] mb-4 md:mb-6">Incident concentration by district or area</p>
             <div className="h-64 md:h-80 flex items-center justify-center relative w-full overflow-hidden">
@@ -178,13 +179,16 @@ export default function EdaDashboard({ selectedDatasetKeys, selectedTypes, selec
                       nameKey="name"
                       label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                       labelLine={false}
+                      isAnimationActive={true}
+                      animationDuration={700}
+                      animationEasing="ease-out"
                     >
                       {districtData.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.2)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)', color: 'var(--color-navy-deep)'}}
+                      contentStyle={{borderRadius: 'var(--radius-control)', border: '1px solid var(--color-border)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 500, backgroundColor: 'var(--color-surface)', color: 'var(--color-navy-deep)'}}
                       itemStyle={{color: 'var(--color-navy-deep)'}}
                       labelStyle={{color: 'var(--color-slate-muted)'}}
                     />
