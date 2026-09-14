@@ -38,31 +38,6 @@ export interface ClusteringResult {
   hotspot_rankings?: HotspotRanking[];
 }
 
-export interface PatrolCheckpoint {
-  order: number;
-  clusterId: number;
-  lat: number;
-  lng: number;
-  riskCategory: string;
-  density: number;
-  volume: number;
-  dominantCrime: string;
-  recommendedUnit: string;
-  peakShift: string;
-  tacticalAction: string;
-}
-
-export interface TacticalPatrolRoute {
-  id: string;
-  title: string;
-  strategy: 'risk-first' | 'shortest-path';
-  checkpoints: PatrolCheckpoint[];
-  coordinates: [number, number][]; // [lng, lat] format for MapLibre GeoJSON
-  totalDistanceKm: number;
-  estimatedDurationMins: number;
-  generatedAt: string;
-}
-
 export interface DateRange {
   start: string;
   end: string;
@@ -142,32 +117,6 @@ export interface RiskPredictionResult {
   message: string;
 }
 
-export interface LiveDispatchIncident {
-  id: string;
-  timestamp: string;
-  time_ago: string;
-  primary_type: string;
-  description: string;
-  severity: 'CRITICAL' | 'HIGH' | 'MODERATE';
-  district: string;
-  lat: number;
-  lng: number;
-  assigned_units: string[];
-  status: 'DISPATCHED' | 'EN ROUTE' | 'ON SCENE' | 'INVESTIGATING';
-  is_new?: boolean;
-}
-
-export interface LiveStreamResponse {
-  status: string;
-  dataset: string;
-  timestamp: string;
-  active_units: number;
-  total_incidents: number;
-  critical_count: number;
-  high_count: number;
-  moderate_count: number;
-  incidents: LiveDispatchIncident[];
-}
 
 export interface BriefingReportData {
   department: string;
@@ -186,6 +135,5 @@ export interface BriefingReportData {
     volume: number;
     violent_ratio: number;
   }>;
-  recent_critical_dispatches: LiveDispatchIncident[];
   operational_directives: string[];
 }

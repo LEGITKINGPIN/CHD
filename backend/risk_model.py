@@ -86,10 +86,8 @@ def run_risk_prediction_pipeline(
     # 1. Build Grid Dataset
     grid_df = build_grid_prediction_dataset(df)
     
-    # 2. Features and Target
+    # 2. Features and Target (behavioral & temporal only — no raw coordinates)
     features = [
-        "grid_lat",
-        "grid_lng",
         "total_crimes",
         "violent_ratio",
         "night_ratio",
@@ -166,10 +164,11 @@ def run_risk_prediction_pipeline(
     )
 
     top_feat = feature_ranking[0]
+    second_feat = feature_ranking[1] if len(feature_ranking) > 1 else {"feature": "N/A", "importance": 0}
     explainability_summary = (
         f"Primary risk driver is '{top_feat['feature']}' contributing {top_feat['importance']}% "
-        f"of the decision weight, followed by '{feature_ranking[1]['feature']}' ({feature_ranking[1]['importance']}%). "
-        "Spatial risk is strongly anchored to historical density with critical modulation from temporal night and violence ratios."
+        f"of the decision weight, followed by '{second_feat['feature']}' ({second_feat['importance']}%). "
+        "Risk classification is driven by historical crime density with critical modulation from violence severity, nighttime vulnerability, and weekend activity ratios."
     )
 
     class_distribution = {str(k): int(v) for k, v in grid_df["risk_class"].value_counts().items()}

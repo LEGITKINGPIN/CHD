@@ -1,6 +1,6 @@
 import React from 'react';
 import { Printer, Download, X, ShieldAlert, CheckCircle2, AlertTriangle, FileText, BrainCircuit, Activity, Clock } from 'lucide-react';
-import { CrimeRecord, ClusteringResult, RiskPredictionResult, LiveDispatchIncident } from '../types';
+import { CrimeRecord, ClusteringResult, RiskPredictionResult } from '../types';
 
 interface ExecutiveBriefingModalProps {
   isOpen: boolean;
@@ -10,7 +10,6 @@ interface ExecutiveBriefingModalProps {
   clusteringResult: ClusteringResult | null;
   algorithm?: string;
   riskPrediction: RiskPredictionResult | null;
-  recentDispatches: LiveDispatchIncident[];
 }
 
 export default function ExecutiveBriefingModal({
@@ -20,8 +19,7 @@ export default function ExecutiveBriefingModal({
   totalCrimes,
   clusteringResult,
   algorithm = 'K-Means',
-  riskPrediction,
-  recentDispatches
+  riskPrediction
 }: ExecutiveBriefingModalProps) {
   if (!isOpen) return null;
 
@@ -38,7 +36,6 @@ export default function ExecutiveBriefingModal({
     timeZoneName: 'short' 
   });
 
-  const criticalDispatches = recentDispatches.filter(d => d.severity === 'CRITICAL');
   const clusters = (clusteringResult?.hotspot_rankings || []).map(h => {
     const centroid = clusteringResult?.centroids && clusteringResult.centroids[h.cluster_id]
       ? clusteringResult.centroids[h.cluster_id]
@@ -84,8 +81,7 @@ export default function ExecutiveBriefingModal({
         f1_score: riskPrediction?.metrics.f1 || 1.0,
         high_risk_sectors_count: (riskPrediction?.grid_cells || []).filter(c => c.risk_class === 'High Risk').length,
         top_risk_sectors: topSectors
-      },
-      recent_critical_dispatches: criticalDispatches
+      }
     };
 
     const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: 'application/json' });
@@ -308,48 +304,11 @@ export default function ExecutiveBriefingModal({
             </div>
           )}
 
-          {/* Section 4: Live CAD Radio Priority Alerts */}
-          {criticalDispatches.length > 0 && (
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-slate-muted)] mb-3 flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                <span>4. Recent Critical CAD Radio Dispatches (Last 30 Minutes)</span>
-              </h3>
-
-              <div className="border border-[var(--color-border)] rounded-[var(--radius-control)] overflow-hidden">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-[var(--color-surface-soft)] border-b border-[var(--color-border)] text-[10px] font-black uppercase text-[var(--color-slate-muted)]">
-                      <th className="py-2 px-3">Call ID</th>
-                      <th className="py-2 px-3">Time</th>
-                      <th className="py-2 px-3">Offense Category</th>
-                      <th className="py-2 px-3">District</th>
-                      <th className="py-2 px-3">Assigned Units</th>
-                      <th className="py-2 px-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--color-border)] font-medium">
-                    {criticalDispatches.slice(0, 5).map(d => (
-                      <tr key={d.id} className="hover:bg-[var(--color-surface-soft)]/50">
-                        <td className="py-2 px-3 font-mono font-bold text-[var(--color-navy-deep)]">{d.id}</td>
-                        <td className="py-2 px-3 text-[var(--color-slate-muted)] font-mono">{d.time_ago}</td>
-                        <td className="py-2 px-3 font-bold text-rose-500">{d.primary_type}</td>
-                        <td className="py-2 px-3 text-[var(--color-slate)]">{d.district}</td>
-                        <td className="py-2 px-3 text-[var(--color-slate)] font-mono">{d.assigned_units.join(', ')}</td>
-                        <td className="py-2 px-3 font-mono text-[10px] text-amber-500 font-bold">{d.status}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Section 5: Actionable Deployment Directives */}
+          {/* Section 4: Actionable Deployment Directives */}
           <div className="border-t border-[var(--color-border)] pt-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-slate-muted)] mb-2 flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              <span>5. Operational Directives & Tactical Shift Recommendations</span>
+              <span>4. Operational Directives & Tactical Shift Recommendations</span>
             </h3>
             <ul className="text-xs text-[var(--color-slate)] space-y-1.5 list-disc list-inside font-medium leading-relaxed">
               <li>Deploy high-visibility rolling patrols across Priority 1 cluster coordinates between 20:00 and 02:00.</li>

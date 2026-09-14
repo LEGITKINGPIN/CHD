@@ -4,8 +4,8 @@ import { clsx } from 'clsx';
 import { motion } from 'motion/react';
 
 interface HeaderProps {
-  activeView: 'map' | 'eda' | 'trends' | 'compare' | 'patrol' | 'risk';
-  setActiveView: (view: 'map' | 'eda' | 'trends' | 'compare' | 'patrol' | 'risk') => void;
+  activeView: 'map' | 'eda' | 'trends' | 'compare' | 'risk';
+  setActiveView: (view: 'map' | 'eda' | 'trends' | 'compare' | 'risk') => void;
   theme?: 'light' | 'dark';
   onToggleTheme?: () => void;
   onOpenBriefing?: () => void;
@@ -17,7 +17,6 @@ export default function Header({ activeView, setActiveView, theme = 'light', onT
     { id: 'eda', label: 'EDA', icon: BarChart3 },
     { id: 'trends', label: 'Trends', icon: Activity },
     { id: 'compare', label: 'Compare', icon: Layers },
-    { id: 'patrol', label: 'Patrol Intel', icon: ShieldAlert },
     { id: 'risk', label: 'Risk Model', icon: BrainCircuit },
   ];
 

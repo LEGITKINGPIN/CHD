@@ -2,12 +2,11 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Map, Source, Layer, Popup, useMap, Marker } from '@vis.gl/react-maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { CrimeRecord, ClusteringResult, Metadata, TacticalPatrolRoute, PatrolCheckpoint, RiskGridCell, LiveDispatchIncident } from '../types';
+import { CrimeRecord, ClusteringResult, Metadata, RiskGridCell } from '../types';
 import * as turf from '@turf/turf';
-import { Search, Layers, MapPin, Route, Navigation, Car, ChevronRight, ChevronLeft, X, Compass, ShieldAlert, Play, Pause, RotateCcw, Clock, Flame, BrainCircuit, Radio } from 'lucide-react';
+import { Search, Layers, MapPin, Navigation, X, Compass, Play, Pause, RotateCcw, Clock, Flame, BrainCircuit, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import MetricsPanel from './MetricsPanel';
-import LiveDispatchDrawer from './LiveDispatchDrawer';
 
 interface MapWorkspaceProps {
   crimes: CrimeRecord[];
@@ -18,25 +17,8 @@ interface MapWorkspaceProps {
   onNavigateCompare: () => void;
   focusCoordinate?: [number, number] | null;
   theme?: 'light' | 'dark';
-  activePatrolRoute?: TacticalPatrolRoute | null;
-  onClearPatrolRoute?: () => void;
   activeRiskGrid?: RiskGridCell[] | null;
   onClearRiskGrid?: () => void;
-  onGoToIntel?: () => void;
-  isLiveDispatchOpen?: boolean;
-  onToggleLiveDispatch?: () => void;
-  liveIncidents?: LiveDispatchIncident[];
-  activeUnits?: number;
-  isLoadingLive?: boolean;
-  onRefreshLive?: () => void;
-  refreshInterval?: number;
-  onSetRefreshInterval?: (sec: number) => void;
-  nextSyncCountdown?: number;
-  onLocateLiveIncident?: (incident: LiveDispatchIncident) => void;
-  trackedIncident?: LiveDispatchIncident | null;
-  onClearTrackedIncident?: () => void;
-  onSyncSocrata?: () => void;
-  isSyncingSocrata?: boolean;
   children?: React.ReactNode;
 }
 
@@ -49,25 +31,8 @@ export default function MapWorkspace({
   onNavigateCompare, 
   focusCoordinate, 
   theme = 'light',
-  activePatrolRoute,
-  onClearPatrolRoute,
   activeRiskGrid,
   onClearRiskGrid,
-  onGoToIntel,
-  isLiveDispatchOpen = false,
-  onToggleLiveDispatch,
-  liveIncidents = [],
-  activeUnits = 42,
-  isLoadingLive = false,
-  onRefreshLive,
-  refreshInterval = 0,
-  onSetRefreshInterval,
-  nextSyncCountdown = 0,
-  onLocateLiveIncident,
-  trackedIncident,
-  onClearTrackedIncident,
-  onSyncSocrata,
-  isSyncingSocrata = false,
   children 
 }: MapWorkspaceProps) {
   const [hoverInfo, setHoverInfo] = useState<{lng: number, lat: number, props: any, type: string} | null>(null);
@@ -206,63 +171,6 @@ export default function MapWorkspace({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-
-  // Active Tactical Patrol Route State
-  const [selectedCheckpoint, setSelectedCheckpoint] = useState<PatrolCheckpoint | null>(null);
-  const [currentCheckpointIndex, setCurrentCheckpointIndex] = useState(0);
-
-  useEffect(() => {
-    if (activePatrolRoute && activePatrolRoute.checkpoints.length > 0) {
-      setCurrentCheckpointIndex(0);
-      setSelectedCheckpoint(activePatrolRoute.checkpoints[0]);
-      if (mapRef.current) {
-        const map = mapRef.current.getMap();
-        map.easeTo({
-          center: [activePatrolRoute.checkpoints[0].lng, activePatrolRoute.checkpoints[0].lat],
-          zoom: 13,
-          duration: 1200
-        });
-      }
-    } else {
-      setSelectedCheckpoint(null);
-    }
-  }, [activePatrolRoute]);
-
-  const handleNextCheckpoint = () => {
-    if (!activePatrolRoute || activePatrolRoute.checkpoints.length === 0) return;
-    const nextIdx = (currentCheckpointIndex + 1) % activePatrolRoute.checkpoints.length;
-    setCurrentCheckpointIndex(nextIdx);
-    const cp = activePatrolRoute.checkpoints[nextIdx];
-    setSelectedCheckpoint(cp);
-    if (mapRef.current) {
-      const map = mapRef.current.getMap();
-      map.easeTo({
-        center: [cp.lng, cp.lat],
-        zoom: 14,
-        duration: 1000
-      });
-    }
-  };
-
-  const patrolRouteGeoJSON = useMemo(() => {
-    if (!activePatrolRoute || activePatrolRoute.coordinates.length < 2) return null;
-    return {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: activePatrolRoute.coordinates
-          },
-          properties: {
-            title: activePatrolRoute.title,
-            distance: activePatrolRoute.totalDistanceKm
-          }
-        }
-      ]
-    };
-  }, [activePatrolRoute]);
 
   useEffect(() => {
     setLocalClusters(null);
@@ -758,27 +666,8 @@ export default function MapWorkspace({
         </form>
       </div>
 
-      {/* Bottom Left Controls: Map Layers, 24h Time-Lapse & Live CAD Dispatch */}
+      {/* Bottom Left Controls: Map Layers & 24h Time-Lapse */}
       <div className="absolute bottom-4 z-10 flex flex-col gap-2 transition-[left] duration-300 ease-in-out max-md:left-4 md:!left-[calc(var(--sidebar-offset,0px)+16px)]">
-        {/* Live CAD Dispatch Launcher Button */}
-        {onToggleLiveDispatch && (
-          <button 
-            onClick={onToggleLiveDispatch}
-            className={clsx(
-              "p-2.5 rounded-full shadow-md border transition-all flex items-center justify-center cursor-pointer relative group",
-              isLiveDispatchOpen 
-                ? "bg-rose-600 text-white border-transparent ring-2 ring-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.35)]" 
-                : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-slate)] hover:bg-[var(--color-surface-soft)] hover:text-rose-500"
-            )}
-            title={isLiveDispatchOpen ? "Close Live CAD Dispatch Feed" : "Open Real-Time CAD Radio Dispatch Feed"}
-          >
-            <Radio className="w-5 h-5" />
-            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
-            </span>
-          </button>
-        )}
 
         {/* 24h Time-Lapse Player Launcher */}
         <button 
@@ -1164,286 +1053,13 @@ export default function MapWorkspace({
           </Source>
         )}
 
-        {/* Tactical Patrol Route Polyline Layers */}
-        {patrolRouteGeoJSON && (
-          <Source id="patrol-route-source" type="geojson" data={patrolRouteGeoJSON as any}>
-            <Layer
-              id="patrol-route-glow"
-              type="line"
-              paint={{
-                'line-color': '#06b6d4',
-                'line-width': 8,
-                'line-opacity': 0.4,
-                'line-blur': 4
-              }}
-            />
-            <Layer
-              id="patrol-route-line"
-              type="line"
-              paint={{
-                'line-color': '#3b82f6',
-                'line-width': 3.5,
-                'line-opacity': 0.95,
-                'line-dasharray': [2, 1]
-              }}
-            />
-          </Source>
-        )}
-
-        {/* Tactical Checkpoint Numbered Markers */}
-        {activePatrolRoute && activePatrolRoute.checkpoints.map((cp) => {
-          const isCrit = cp.riskCategory.toLowerCase().includes('critical');
-          const isH = cp.riskCategory.toLowerCase().includes('high');
-          const isSelected = selectedCheckpoint?.order === cp.order;
-          
-          return (
-            <Marker
-              key={`patrol-cp-${cp.order}`}
-              longitude={cp.lng}
-              latitude={cp.lat}
-              anchor="center"
-              onClick={(e) => {
-                e.originalEvent.stopPropagation();
-                setSelectedCheckpoint(cp);
-                setCurrentCheckpointIndex(cp.order - 1);
-              }}
-            >
-              <div className="relative group cursor-pointer">
-                {isSelected && (
-                  <span className={clsx(
-                    "absolute -inset-1.5 rounded-full animate-ping opacity-75",
-                    isCrit ? "bg-red-500" : isH ? "bg-amber-500" : "bg-blue-500"
-                  )} />
-                )}
-                <div className={clsx(
-                  "relative flex items-center justify-center w-8 h-8 rounded-full font-black text-[12px] text-white shadow-xl border-2 transition-transform duration-200 group-hover:scale-110",
-                  isSelected ? "scale-110 ring-2 ring-white" : "",
-                  isCrit ? "bg-red-600 border-red-200" :
-                  isH ? "bg-amber-500 border-amber-200" :
-                  "bg-blue-600 border-blue-200"
-                )}>
-                  {cp.order}
-                </div>
-              </div>
-            </Marker>
-          );
-        })}
-
-        {/* Selected Checkpoint Dispatch Popup */}
-        {selectedCheckpoint && (
-          <Popup
-            longitude={selectedCheckpoint.lng}
-            latitude={selectedCheckpoint.lat}
-            closeButton={true}
-            closeOnClick={false}
-            onClose={() => setSelectedCheckpoint(null)}
-            anchor="bottom"
-            offset={20}
-            className="z-50"
-          >
-            <div className="p-3.5 text-[12px] max-w-[280px] bg-[var(--color-surface)] text-[var(--color-navy-deep)] rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xl">
-              <div className="flex items-center justify-between border-b pb-2 mb-2 border-[var(--color-border)]">
-                <div className="flex items-center gap-1.5">
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-navy-deep)] text-white text-[10px] font-black">
-                    {selectedCheckpoint.order}
-                  </span>
-                  <span className="font-bold text-[13px] text-[var(--color-navy-deep)]">
-                    Checkpoint #{selectedCheckpoint.order}
-                  </span>
-                </div>
-                <span className={clsx(
-                  "text-[10px] font-bold px-2 py-0.5 rounded uppercase",
-                  selectedCheckpoint.riskCategory.toLowerCase().includes('critical') 
-                    ? "bg-[var(--color-critical)]/15 text-[var(--color-critical)]" 
-                    : "bg-[var(--color-warning)]/15 text-[var(--color-warning)]"
-                )}>
-                  Cluster #{selectedCheckpoint.clusterId}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <div>
-                  <div className="text-[10px] font-bold text-[var(--color-slate-muted)] uppercase tracking-wider">
-                    Target Crime Profile
-                  </div>
-                  <div className="font-semibold text-[13px] text-[var(--color-navy-deep)]">
-                    {selectedCheckpoint.dominantCrime}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[11px] bg-[var(--color-background)] p-2 rounded border border-[var(--color-border)]">
-                  <div>
-                    <span className="text-[var(--color-slate-muted)] block text-[10px] uppercase font-bold">Density</span>
-                    <span className="font-bold text-[var(--color-navy-deep)]">{selectedCheckpoint.density.toFixed(1)}/km²</span>
-                  </div>
-                  <div>
-                    <span className="text-[var(--color-slate-muted)] block text-[10px] uppercase font-bold">Window</span>
-                    <span className="font-semibold text-[var(--color-navy-deep)]">{selectedCheckpoint.peakShift.replace('Shift Window: ', '')}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-wider mb-0.5 flex items-center gap-1">
-                    <Car className="w-3 h-3" /> Recommended Unit
-                  </div>
-                  <div className="font-semibold text-[11px] text-[var(--color-navy-deep)]">
-                    {selectedCheckpoint.recommendedUnit}
-                  </div>
-                </div>
-
-                <div className="text-[11px] text-[var(--color-slate)] bg-[var(--color-surface-soft)] p-2 rounded leading-relaxed border border-[var(--color-border)]">
-                  {selectedCheckpoint.tacticalAction}
-                </div>
-              </div>
-            </div>
-          </Popup>
-        )}
-
-        {/* Risk Grid Cell Hover Popup */}
-        {hoverInfo && hoverInfo.type === 'risk-cell' && (
-          <Popup
-            longitude={hoverInfo.lng}
-            latitude={hoverInfo.lat}
-            closeButton={false}
-            closeOnClick={false}
-            anchor="bottom"
-            className="z-50"
-          >
-            <div className="p-2.5 text-xs max-w-[210px] bg-[var(--color-surface)] text-[var(--color-navy-deep)] rounded shadow-md border border-[var(--color-border)]">
-              <div className="font-bold flex items-center gap-1.5 mb-1">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: hoverInfo.props.color }} />
-                <span>Sector {hoverInfo.props.grid_id}</span>
-              </div>
-              <div className="font-bold text-[11px] mb-1.5" style={{ color: hoverInfo.props.color }}>
-                {hoverInfo.props.risk_class} ({(Number(hoverInfo.props.risk_probability) * 100).toFixed(0)}% High-Risk Prob)
-              </div>
-              <div className="text-[10px] text-[var(--color-slate-muted)] space-y-0.5">
-                <div>Historical Crimes: <span className="font-bold text-[var(--color-navy-deep)]">{hoverInfo.props.total_crimes}</span></div>
-                <div>Violent Ratio: {(Number(hoverInfo.props.violent_ratio) * 100).toFixed(0)}%</div>
-                <div>Night Ratio: {(Number(hoverInfo.props.night_ratio) * 100).toFixed(0)}%</div>
-              </div>
-            </div>
-          </Popup>
-        )}
-
-        {/* Tracked Live CAD Incident Pulsing Radar Marker */}
-        {trackedIncident && (
-          <Marker
-            longitude={trackedIncident.lng}
-            latitude={trackedIncident.lat}
-            anchor="center"
-          >
-            <div className="relative flex items-center justify-center cursor-pointer group">
-              <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-rose-500 opacity-60" />
-              <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-rose-400 opacity-75" style={{ animationDelay: '0.3s' }} />
-              <div className="relative z-10 p-2 rounded-full bg-rose-600 text-white shadow-xl border-2 border-white flex items-center justify-center">
-                <Radio className="w-4 h-4 animate-pulse" />
-              </div>
-            </div>
-          </Marker>
-        )}
-
-        {trackedIncident && (
-          <Popup
-            longitude={trackedIncident.lng}
-            latitude={trackedIncident.lat}
-            closeButton={true}
-            closeOnClick={false}
-            onClose={onClearTrackedIncident}
-            anchor="bottom"
-            offset={25}
-            className="z-50"
-          >
-            <div className="p-3 text-[12px] max-w-[240px] bg-[var(--color-surface)] text-[var(--color-navy-deep)] rounded-[var(--radius-panel)] border border-rose-500/40 shadow-xl">
-              <div className="flex items-center justify-between border-b pb-1.5 mb-1.5 border-[var(--color-border)]">
-                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded bg-rose-500/15 text-rose-500 border border-rose-500/30">
-                  {trackedIncident.severity}
-                </span>
-                <span className="text-[10px] font-mono text-[var(--color-slate-muted)]">
-                  {trackedIncident.id}
-                </span>
-              </div>
-              <h4 className="font-black text-[12px] text-[var(--color-navy-deep)] mb-1">
-                {trackedIncident.primary_type}
-              </h4>
-              <p className="text-[11px] text-[var(--color-slate)] leading-relaxed mb-1.5">
-                {trackedIncident.description}
-              </p>
-              <div className="text-[10px] text-[var(--color-slate-muted)] pt-1.5 border-t border-[var(--color-border)] flex justify-between">
-                <span>{trackedIncident.district}</span>
-                <span className="font-bold text-amber-500">{trackedIncident.status}</span>
-              </div>
-            </div>
-          </Popup>
-        )}
-
       </Map>
-
-      {/* Floating Tactical Patrol HUD Bar (Adjusts vertically if Time-Lapse is active) */}
-      {activePatrolRoute && (
-        <div className={clsx(
-          "absolute left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 md:gap-3 bg-[var(--color-surface)]/95 backdrop-blur-md px-4 py-2.5 rounded-[var(--radius-panel)] shadow-xl border border-[var(--color-border)] max-w-[calc(100vw-32px)] overflow-x-auto custom-scrollbar transition-all duration-300",
-          isTimeLapseActive ? "bottom-[175px] md:bottom-[180px]" : "bottom-5"
-        )}>
-          <div className="flex items-center gap-2.5 shrink-0 border-r border-[var(--color-border)] pr-3">
-            <span className="p-1.5 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-indigo)] text-white rounded-md shadow-sm">
-              <Route className="w-4 h-4" />
-            </span>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-black text-[var(--color-primary)] tracking-widest uppercase">
-                  Tactical Patrol Circuit
-                </span>
-                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">
-                  Active
-                </span>
-              </div>
-              <div className="text-[12px] font-bold text-[var(--color-navy-deep)] whitespace-nowrap">
-                {activePatrolRoute.checkpoints.length} Checkpoints • {activePatrolRoute.totalDistanceKm} km tour
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={handleNextCheckpoint}
-              title="Focus Next Checkpoint"
-              className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white text-[11px] font-bold rounded-[var(--radius-control)] shadow-sm transition-all whitespace-nowrap cursor-pointer"
-            >
-              <span>Next Stop ({currentCheckpointIndex + 1}/{activePatrolRoute.checkpoints.length})</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-
-            {onGoToIntel && (
-              <button
-                onClick={onGoToIntel}
-                title="View Full Intel Sheet"
-                className="px-3 py-1.5 bg-[var(--color-surface-soft)] hover:bg-[var(--color-border)] text-[var(--color-slate)] hover:text-[var(--color-navy-deep)] text-[11px] font-bold rounded-[var(--radius-control)] border border-[var(--color-border)] transition-colors whitespace-nowrap cursor-pointer"
-              >
-                Intel Sheet
-              </button>
-            )}
-
-            {onClearPatrolRoute && (
-              <button
-                onClick={onClearPatrolRoute}
-                title="Clear Active Patrol Route"
-                className="p-1.5 text-[var(--color-slate-muted)] hover:text-[var(--color-rose)] hover:bg-[var(--color-rose)]/10 rounded-[var(--radius-control)] transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Floating Supervised Risk Grid HUD Bar */}
       {activeRiskGrid && activeRiskGrid.length > 0 && (
         <div className={clsx(
           "absolute left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 md:gap-3 bg-[var(--color-surface)]/95 backdrop-blur-md px-4 py-2.5 rounded-[var(--radius-panel)] shadow-xl border border-[var(--color-border)] max-w-[calc(100vw-32px)] overflow-x-auto custom-scrollbar transition-all duration-300",
-          isTimeLapseActive 
-            ? (activePatrolRoute ? "bottom-[235px]" : "bottom-[175px]") 
-            : (activePatrolRoute ? "bottom-20" : "bottom-5")
+          isTimeLapseActive ? "bottom-[175px]" : "bottom-5"
         )}>
           <div className="flex items-center gap-2.5 shrink-0 border-r border-[var(--color-border)] pr-3">
             <span className="p-1.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-md shadow-sm">
@@ -1918,21 +1534,6 @@ export default function MapWorkspace({
         </div>
       )}
 
-      {/* CAD Live Dispatch Drawer */}
-      <LiveDispatchDrawer
-        isOpen={isLiveDispatchOpen}
-        onClose={onToggleLiveDispatch || (() => {})}
-        incidents={liveIncidents}
-        activeUnits={activeUnits}
-        isLoading={isLoadingLive}
-        onRefresh={onRefreshLive || (() => {})}
-        refreshInterval={refreshInterval}
-        onSetRefreshInterval={onSetRefreshInterval || (() => {})}
-        nextSyncCountdown={nextSyncCountdown}
-        onLocateIncident={onLocateLiveIncident || (() => {})}
-        onSyncSocrata={onSyncSocrata}
-        isSyncingSocrata={isSyncingSocrata}
-      />
     </div>
   );
 }

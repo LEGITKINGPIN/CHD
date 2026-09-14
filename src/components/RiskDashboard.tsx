@@ -24,8 +24,6 @@ const FEATURE_NAMES: Record<string, string> = {
   violent_ratio: 'Violent Offense Proportion',
   night_ratio: 'Nighttime Vulnerability Ratio',
   weekend_ratio: 'Weekend Incident Ratio',
-  grid_lng: 'Spatial Longitude Coordinate',
-  grid_lat: 'Spatial Latitude Coordinate',
 };
 
 const FEATURE_COLORS = ['#3b82f6', '#ef4444', '#8b5cf6', '#f59e0b', '#06b6d4', '#10b981'];
@@ -89,12 +87,14 @@ export default function RiskDashboard({
   // Formatted chart data for Feature Importance
   const featureChartData = useMemo(() => {
     if (!result || !result.feature_ranking) return [];
-    return result.feature_ranking.map((item, idx) => ({
-      name: FEATURE_NAMES[item.feature] || item.feature,
-      rawFeature: item.feature,
-      importance: item.importance,
-      color: FEATURE_COLORS[idx % FEATURE_COLORS.length],
-    }));
+    return result.feature_ranking
+      .filter((item) => item.feature !== 'grid_lat' && item.feature !== 'grid_lng')
+      .map((item, idx) => ({
+        name: FEATURE_NAMES[item.feature] || item.feature,
+        rawFeature: item.feature,
+        importance: item.importance,
+        color: FEATURE_COLORS[idx % FEATURE_COLORS.length],
+      }));
   }, [result]);
 
   // Filtered sectors for table
@@ -325,7 +325,7 @@ export default function RiskDashboard({
                 </span>
               </div>
               <p className="text-[12px] text-[var(--color-slate-muted)] mb-5">
-                Relative influence of spatial, historical, and offense attributes on predicting high-risk zones.
+                Relative influence of historical volume, violence severity, and temporal attributes on predicting high-risk zones.
               </p>
 
               {/* Horizontal Bar Chart */}

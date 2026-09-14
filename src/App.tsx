@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { CrimeRecord, ClusteringResult, Metadata, DatasetInfo, TacticalPatrolRoute, RiskGridCell, LiveDispatchIncident, RiskPredictionResult } from './types';
+import { CrimeRecord, ClusteringResult, Metadata, DatasetInfo, RiskGridCell, RiskPredictionResult } from './types';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -16,9 +16,8 @@ import MetricsPanel from './components/MetricsPanel';
 import MacroDashboard from './components/MacroDashboard';
 import EdaDashboard from './components/EdaDashboard';
 import CompareAlgorithms from './components/CompareAlgorithms';
-import PatrolIntelligence from './components/PatrolIntelligence';
 import RiskDashboard from './components/RiskDashboard';
-import LiveAlertToast from './components/LiveAlertToast';
+
 import ExecutiveBriefingModal from './components/ExecutiveBriefingModal';
 
 const API_BASE_URL = '/api';
@@ -31,7 +30,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   
   // Navigation State
-  const [activeView, setActiveView] = useState<'map' | 'eda' | 'trends' | 'compare' | 'patrol' | 'risk'>('map');
+  const [activeView, setActiveView] = useState<'map' | 'eda' | 'trends' | 'compare' | 'risk'>('map');
   
   // Custom Area Marker
   const [customMarker, setCustomMarker] = useState<{lng: number, lat: number, radiusKm: number} | null>(null);
@@ -43,6 +42,32 @@ export default function App() {
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['ALL']);
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>(['ALL']);
   const [selectedArrest, setSelectedArrest] = useState<string[]>(['ALL']);
+  
+  // Temporal Filters
+  const [selectedYears, setSelectedYears] = useState<number[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+
+  const availableYears = useMemo(() => {
+    const yrs = new Set<number>();
+    for (const c of crimes) {
+      if (!c.date || c.date === 'UNKNOWN') continue;
+      const d = new Date(c.date);
+      if (!isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        if (y > 1990 && y < 2100) yrs.add(y);
+      } else {
+        const match = c.date.match(/\b(19\d\d|20\d\d)\b/);
+        if (match) {
+          const y = parseInt(match[1], 10);
+          if (y > 1990 && y < 2100) yrs.add(y);
+        }
+      }
+    }
+    return Array.from(yrs).sort((a, b) => b - a);
+  }, [crimes]);
+
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<string>('K-MEANS');
 
   // Theme State
@@ -81,23 +106,8 @@ export default function App() {
   const [clusteringResult, setClusteringResult] = useState<ClusteringResult | null>(null);
   const [isClustering, setIsClustering] = useState(false);
 
-  // Tactical Patrol Route
-  const [activePatrolRoute, setActivePatrolRoute] = useState<TacticalPatrolRoute | null>(null);
-
   // Supervised Risk Grid
   const [activeRiskGrid, setActiveRiskGrid] = useState<RiskGridCell[] | null>(null);
-
-  const handleDeployPatrolRoute = (route: TacticalPatrolRoute) => {
-    setActivePatrolRoute(route);
-    setActiveView('map');
-    if (route.coordinates.length > 0) {
-      setFocusCoordinate(route.coordinates[0]);
-    }
-  };
-
-  const handleClearPatrolRoute = () => {
-    setActivePatrolRoute(null);
-  };
 
   const handleDeployRiskGrid = (cells: RiskGridCell[]) => {
     setActiveRiskGrid(cells);
@@ -111,95 +121,11 @@ export default function App() {
     setActiveRiskGrid(null);
   };
 
-  // Option C: Live CAD Dispatch & Real-Time Intelligence
-  const [isLiveDispatchOpen, setIsLiveDispatchOpen] = useState(false);
-  const [liveIncidents, setLiveIncidents] = useState<LiveDispatchIncident[]>([]);
-  const [activeUnits, setActiveUnits] = useState(42);
-  const [isLoadingLive, setIsLoadingLive] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState<number>(15); // Default 15s streaming
-  const [nextSyncCountdown, setNextSyncCountdown] = useState<number>(15);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
-  const [activeLiveAlert, setActiveLiveAlert] = useState<LiveDispatchIncident | null>(null);
-  const [trackedIncident, setTrackedIncident] = useState<LiveDispatchIncident | null>(null);
+  // End Risk Model Handlers
+  
   const [isBriefingModalOpen, setIsBriefingModalOpen] = useState(false);
   const [isSyncingSocrata, setIsSyncingSocrata] = useState(false);
   const [cachedRiskPrediction, setCachedRiskPrediction] = useState<RiskPredictionResult | null>(null);
-  const knownIncidentIdsRef = React.useRef<Set<string>>(new Set());
-
-  const playAlertChime = () => {
-    if (typeof window === 'undefined') return;
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(780, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1180, ctx.currentTime + 0.18);
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.35);
-    } catch (e) {}
-  };
-
-  const fetchLiveStream = async () => {
-    setIsLoadingLive(true);
-    try {
-      const currentDatasetKey = selectedDatasetKeys[0] || 'chicago';
-      const res = await fetch(`${API_BASE_URL}/live/stream?dataset=${currentDatasetKey}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.incidents) {
-        setLiveIncidents(data.incidents);
-        setActiveUnits(data.active_units || 42);
-
-        // Detect new critical/high incoming alerts
-        const newlyReceived = data.incidents.filter((inc: LiveDispatchIncident) => 
-          !knownIncidentIdsRef.current.has(inc.id) && (inc.severity === 'CRITICAL' || inc.severity === 'HIGH')
-        );
-
-        if (newlyReceived.length > 0) {
-          setActiveLiveAlert(newlyReceived[0]);
-          if (soundEnabled) {
-            playAlertChime();
-          }
-        }
-
-        data.incidents.forEach((inc: LiveDispatchIncident) => knownIncidentIdsRef.current.add(inc.id));
-      }
-    } catch (err) {
-      console.error("Failed to fetch live stream", err);
-    } finally {
-      setIsLoadingLive(false);
-      setNextSyncCountdown(refreshInterval || 15);
-    }
-  };
-
-  // Initial fetch on dataset change
-  useEffect(() => {
-    fetchLiveStream();
-  }, [selectedDatasetKeys]);
-
-  // Polling ticker effect
-  useEffect(() => {
-    if (refreshInterval <= 0) return;
-
-    const timer = setInterval(() => {
-      setNextSyncCountdown(prev => {
-        if (prev <= 1) {
-          fetchLiveStream();
-          return refreshInterval;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [refreshInterval, selectedDatasetKeys, soundEnabled]);
 
   const handleSyncSocrata = async () => {
     setIsSyncingSocrata(true);
@@ -211,16 +137,6 @@ export default function App() {
     } finally {
       setIsSyncingSocrata(false);
     }
-  };
-
-  const handleLocateLiveIncident = (incident: LiveDispatchIncident) => {
-    setTrackedIncident(incident);
-    setActiveView('map');
-    setFocusCoordinate([incident.lng, incident.lat]);
-  };
-
-  const handleClearTrackedIncident = () => {
-    setTrackedIncident(null);
   };
 
   const selectedDataset = useMemo(() => {
@@ -261,12 +177,15 @@ export default function App() {
       
       // Clear all results and incompatible filters
       setClusteringResult(null);
-      setActivePatrolRoute(null);
       
       // Reset filters when switching datasets to avoid applying districts/types that don't exist
       setSelectedTypes(['ALL']);
       setSelectedDistricts(['ALL']);
       setSelectedArrest(['ALL']);
+      setSelectedYears([]);
+      setSelectedMonths([]);
+      setDateFrom('');
+      setDateTo('');
     } catch (err) {
       console.error("Failed to load data", err);
     } finally {
@@ -345,13 +264,59 @@ export default function App() {
         return false;
       });
     }
+
+    if (selectedYears.length > 0 || selectedMonths.length > 0 || dateFrom || dateTo) {
+      const from = dateFrom ? new Date(dateFrom).getTime() : -Infinity;
+      // To inclusive: add one day
+      const to = dateTo ? new Date(dateTo).getTime() + 86400000 : Infinity;
+      
+      result = result.filter(c => {
+        if (!c.date || c.date === 'UNKNOWN') return false;
+        
+        let cYear = 0;
+        let cMonth = 0;
+        let cTime = 0;
+        
+        // Parse date reliably
+        const d = new Date(c.date);
+        if (!isNaN(d.getTime())) {
+          cYear = d.getFullYear();
+          cMonth = d.getMonth() + 1;
+          cTime = d.getTime();
+        } else {
+          // Fallback parsing YYYY-MM-DD or MM/DD/YYYY
+          const isoMatch = c.date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (isoMatch) {
+            cYear = parseInt(isoMatch[1], 10);
+            cMonth = parseInt(isoMatch[2], 10);
+            cTime = new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`).getTime();
+          } else {
+            const usMatch = c.date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (usMatch) {
+              cYear = parseInt(usMatch[3], 10);
+              cMonth = parseInt(usMatch[1], 10);
+              cTime = new Date(`${usMatch[3]}-${usMatch[1]}-${usMatch[2]}`).getTime();
+            }
+          }
+        }
+        
+        if (cYear === 0) return false;
+        
+        if (selectedYears.length > 0 && !selectedYears.includes(cYear)) return false;
+        if (selectedMonths.length > 0 && !selectedMonths.includes(cMonth)) return false;
+        if (cTime < from || cTime >= to) return false;
+        
+        return true;
+      });
+    }
+
     return result;
-  }, [crimes, selectedTypes, selectedDistricts, selectedArrest]);
+  }, [crimes, selectedTypes, selectedDistricts, selectedArrest, selectedYears, selectedMonths, dateFrom, dateTo]);
 
   // Clear clustering result when filters change, as the underlying data is different
   useEffect(() => {
     setClusteringResult(null);
-  }, [selectedTypes, selectedDistricts, selectedArrest]);
+  }, [selectedTypes, selectedDistricts, selectedArrest, selectedYears, selectedMonths, dateFrom, dateTo]);
 
   const runClustering = async (algorithm: string, params: any) => {
     if (filteredCrimes.length === 0) return;
@@ -438,6 +403,21 @@ export default function App() {
                 isLoadingDataset={loading}
                 onUpload={handleUpload}
                 onLiveFetch={handleLiveFetch}
+                availableYears={availableYears}
+                selectedYears={selectedYears}
+                setSelectedYears={setSelectedYears}
+                selectedMonths={selectedMonths}
+                setSelectedMonths={setSelectedMonths}
+                dateFrom={dateFrom}
+                setDateFrom={setDateFrom}
+                dateTo={dateTo}
+                setDateTo={setDateTo}
+                onResetTemporalFilters={() => {
+                  setSelectedYears([]);
+                  setSelectedMonths([]);
+                  setDateFrom('');
+                  setDateTo('');
+                }}
               />
               <main className="flex-1 relative">
                 <MapWorkspace 
@@ -449,25 +429,8 @@ export default function App() {
                   onNavigateCompare={() => setActiveView('compare')}
                   focusCoordinate={focusCoordinate}
                   theme={theme}
-                  activePatrolRoute={activePatrolRoute}
-                  onClearPatrolRoute={handleClearPatrolRoute}
                   activeRiskGrid={activeRiskGrid}
                   onClearRiskGrid={handleClearRiskGrid}
-                  onGoToIntel={() => setActiveView('patrol')}
-                  isLiveDispatchOpen={isLiveDispatchOpen}
-                  onToggleLiveDispatch={() => setIsLiveDispatchOpen(prev => !prev)}
-                  liveIncidents={liveIncidents}
-                  activeUnits={activeUnits}
-                  isLoadingLive={isLoadingLive}
-                  onRefreshLive={fetchLiveStream}
-                  refreshInterval={refreshInterval}
-                  onSetRefreshInterval={setRefreshInterval}
-                  nextSyncCountdown={nextSyncCountdown}
-                  onLocateLiveIncident={handleLocateLiveIncident}
-                  trackedIncident={trackedIncident}
-                  onClearTrackedIncident={handleClearTrackedIncident}
-                  onSyncSocrata={handleSyncSocrata}
-                  isSyncingSocrata={isSyncingSocrata}
                 >
                   {clusteringResult && (
                     <MetricsPanel result={clusteringResult} algorithm={selectedAlgorithm} />
@@ -529,27 +492,6 @@ export default function App() {
                 }}
               />
             </motion.div>
-          ) : activeView === 'patrol' ? (
-            <motion.div
-              key="view-patrol"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="flex-1 flex overflow-hidden w-full h-full"
-            >
-              <PatrolIntelligence 
-                clusteringResult={clusteringResult} 
-                algorithm={selectedAlgorithm} 
-                onLocateHotspot={(lng, lat) => {
-                  setFocusCoordinate([lng, lat]);
-                  setActiveView('map');
-                }}
-                onGoToMap={() => setActiveView('map')}
-                onDeployPatrolRoute={handleDeployPatrolRoute}
-                activePatrolRoute={activePatrolRoute}
-              />
-            </motion.div>
           ) : activeView === 'risk' ? (
             <motion.div
               key="view-risk"
@@ -575,18 +517,6 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      {/* Live Alert Toast for incoming critical incidents */}
-      <LiveAlertToast
-        alert={activeLiveAlert}
-        onDismiss={() => setActiveLiveAlert(null)}
-        onLocate={(incident) => {
-          handleLocateLiveIncident(incident);
-          setActiveLiveAlert(null);
-        }}
-        soundEnabled={soundEnabled}
-        onToggleSound={() => setSoundEnabled(prev => !prev)}
-      />
-
       {/* Executive Briefing Dossier Modal (Print/PDF) */}
       <ExecutiveBriefingModal
         isOpen={isBriefingModalOpen}
@@ -596,7 +526,6 @@ export default function App() {
         clusteringResult={clusteringResult}
         algorithm={selectedAlgorithm}
         riskPrediction={cachedRiskPrediction}
-        recentDispatches={liveIncidents}
       />
     </div>
   );

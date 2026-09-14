@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Metadata, DatasetInfo } from '../types';
-import { Crosshair, Activity, SlidersHorizontal, Database, Map, Upload, DownloadCloud, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Crosshair, Activity, SlidersHorizontal, Database, Map, Upload, DownloadCloud, ChevronLeft, ChevronRight, Calendar, RotateCcw } from 'lucide-react';
 import MultiSelectDropdown from './MultiSelectDropdown';
 
 interface SidebarProps {
@@ -25,6 +25,16 @@ interface SidebarProps {
   isLoadingDataset: boolean;
   onUpload?: (file: File) => void;
   onLiveFetch?: (url: string, limit: number) => void;
+  availableYears?: number[];
+  selectedYears: number[];
+  setSelectedYears: (v: number[]) => void;
+  selectedMonths: number[];
+  setSelectedMonths: (v: number[]) => void;
+  dateFrom: string;
+  setDateFrom: (v: string) => void;
+  dateTo: string;
+  setDateTo: (v: string) => void;
+  onResetTemporalFilters: () => void;
 }
 
 export default function Sidebar({
@@ -48,7 +58,17 @@ export default function Sidebar({
   districts,
   isLoadingDataset,
   onUpload,
-  onLiveFetch
+  onLiveFetch,
+  availableYears = [],
+  selectedYears,
+  setSelectedYears,
+  selectedMonths,
+  setSelectedMonths,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
+  onResetTemporalFilters
 }: SidebarProps) {
   const [k, setK] = useState<number>(5);
   const [eps, setEps] = useState<number>(0.5);
@@ -279,6 +299,116 @@ export default function Sidebar({
                 />
                 No Arrest
               </label>
+            </div>
+          </div>
+
+          {/* TEMPORAL FILTERS (DATE, MONTH, YEAR) */}
+          <div className="pt-3 border-t border-[var(--color-border)]">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-bold text-[var(--color-slate-muted)] uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                Temporal Filter
+              </label>
+              {(selectedYears.length > 0 || selectedMonths.length > 0 || !!dateFrom || !!dateTo) && (
+                <button
+                  type="button"
+                  onClick={onResetTemporalFilters}
+                  className="text-[10px] text-[var(--color-primary)] hover:underline flex items-center gap-1 font-semibold transition-colors"
+                  title="Reset temporal filters"
+                >
+                  <RotateCcw className="w-2.5 h-2.5" />
+                  Reset
+                </button>
+              )}
+            </div>
+
+            {/* Year Selector */}
+            {availableYears && availableYears.length > 0 && (
+              <div className="mb-3">
+                <div className="text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">YEAR</div>
+                <MultiSelectDropdown
+                  options={[
+                    { value: 'ALL', label: 'All Years' },
+                    ...availableYears.map(y => ({ value: String(y), label: String(y) }))
+                  ]}
+                  selectedValues={selectedYears.length === 0 ? ['ALL'] : selectedYears.map(String)}
+                  onChange={(vals) => {
+                    if (vals.includes('ALL')) {
+                      setSelectedYears([]);
+                    } else {
+                      setSelectedYears(vals.map(Number));
+                    }
+                  }}
+                  placeholder="All Years"
+                />
+              </div>
+            )}
+
+            {/* Month Selector */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-bold text-[var(--color-slate-muted)] uppercase">MONTH</span>
+                {selectedMonths.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMonths([])}
+                    className="text-[9px] text-[var(--color-slate-muted)] hover:text-[var(--color-primary)] font-medium"
+                  >
+                    Clear Months
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-6 gap-1">
+                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((mName, idx) => {
+                  const monthNum = idx + 1;
+                  const isSelected = selectedMonths.includes(monthNum);
+                  return (
+                    <button
+                      key={monthNum}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedMonths(selectedMonths.filter(m => m !== monthNum));
+                        } else {
+                          setSelectedMonths([...selectedMonths, monthNum]);
+                        }
+                      }}
+                      className={`text-[10px] font-medium py-1 px-0.5 text-center rounded transition-all ${
+                        isSelected
+                          ? 'bg-[var(--color-primary)] text-white shadow-sm font-bold'
+                          : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-slate-muted)] hover:text-[var(--color-slate)] hover:border-[var(--color-primary)]/40'
+                      }`}
+                    >
+                      {mName}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Date Range */}
+            <div>
+              <div className="text-[10px] font-bold text-[var(--color-slate-muted)] mb-1.5 uppercase">DATE RANGE</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="block text-[9px] text-[var(--color-slate-muted)] mb-1 font-medium">From</span>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-full text-[11px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-2 py-1.5 text-[var(--color-navy-deep)] focus:outline-none focus:border-[var(--color-primary)]"
+                  />
+                </div>
+                <div>
+                  <span className="block text-[9px] text-[var(--color-slate-muted)] mb-1 font-medium">To</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-full text-[11px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-2 py-1.5 text-[var(--color-navy-deep)] focus:outline-none focus:border-[var(--color-primary)]"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
